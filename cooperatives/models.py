@@ -14,11 +14,31 @@ class Cooperative(models.Model):
         return self.title
 
 
+class Street(models.Model):
+    """
+    Ми перенесли Вулицю сюди, бо вона є частиною Кооперативу,
+    а не просто властивістю лічильника.
+    """
+    cooperative = models.ForeignKey(
+        Cooperative,
+        on_delete=models.CASCADE,
+        verbose_name="Кооператив"
+        )
+    name = models.CharField(max_length=100, verbose_name="Назва вулиці")
+
+    class Meta:
+        verbose_name = "Вулиця"
+        verbose_name_plural = "Вулиці"
+
+    def __str__(self):
+        return self.name
+
+
 class Membership(models.Model):
     ROLE_CHOICES = [
         ('member', 'Учасник'),
         ('chairman', 'Голова правління'),
-        ('vice_chairman','Зам голови'),
+        ('vice_chairman', 'Зам голови'),
         ('accountant', 'Бухгалтер'),
         ]
 
@@ -32,6 +52,14 @@ class Membership(models.Model):
         Cooperative,
         on_delete=models.CASCADE,
         verbose_name="Кооператив"
+        )
+
+    # НОВЕ ПОЛЕ: Тепер людина прив'язана до вулиці
+    street = models.ForeignKey(
+        Street,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Вулиця"
         )
 
     role = models.CharField(
@@ -51,4 +79,6 @@ class Membership(models.Model):
         verbose_name_plural = "Члени кооперативів"
 
     def __str__(self):
-        return f"{self.user} - {self.cooperative} ({self.get_role_display()})"
+        # Тепер у нас гарна адреса: "Вул. Садова, буд. 5 - Іван"
+        address = f"{self.street.name}, {self.plot_number}" if self.street else f"Діл. {self.plot_number}"
+        return f"{address} ({self.user.username})"

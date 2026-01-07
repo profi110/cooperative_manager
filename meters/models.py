@@ -1,0 +1,121 @@
+from django.db import models
+from django.conf import settings
+from cooperatives.models import Cooperative, Membership, Street
+
+
+class Meter(models.Model):
+    TYPE_CHOICES = [('el', 'Електроенергія')]
+    HIERARCHY_CHOICES = [
+        ('individual', 'Особистий (Будинок/Квартира)'),
+        ('street', 'Вуличний (Баланс вулиці)'),
+        ('global', 'Головний (Баланс кооперативу)'),
+        ]
+
+    cooperative = models.ForeignKey(
+        Cooperative,
+        on_delete=models.CASCADE,
+        verbose_name="Кооператив",
+        null=True, blank=True)
+
+    membership = models.ForeignKey(
+        Membership,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Власник")
+
+    street = models.ForeignKey(
+        Street,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Вулиця")
+
+    type = models.CharField(
+        max_length=10,
+        choices=TYPE_CHOICES,
+        default='el',
+        verbose_name="Тип")
+
+    hierarchy = models.CharField(
+        max_length=20,
+        choices=HIERARCHY_CHOICES,
+        default='individual',
+        verbose_name="Рівень")
+
+    number = models.CharField(
+        max_length=50,
+        verbose_name="Серійний номер")
+
+
+    is_two_zone = models.BooleanField(
+        default=False,
+        verbose_name="Двозонний (День/Ніч)")
+
+    initial_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Початковий показник")
+
+    class Meta:
+        verbose_name = "Лічильник"
+        verbose_name_plural = "Лічильники"
+
+    def __str__(self):
+        return f"№{self.number} ({'День/Ніч' if self.is_two_zone else 'Звичайний'})"
+
+
+class Reading(models.Model):
+    meter = models.ForeignKey(
+        Meter,
+        on_delete=models.CASCADE,
+        verbose_name="Лічильник",
+        related_name='readings')
+
+    # ПЕРЕЙМЕНУВАЛИ value -> value_total (Обов'язкове)
+    value_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Загальний (Т)")
+
+    # НОВІ ПОЛЯ (Необов'язкові, blank=True)
+    value_day = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="День (Т1)")
+
+    value_night = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Ніч (Т2)")
+
+    date = models.DateField(
+        auto_now_add=True,
+        verbose_name="Дата подачі")
+
+    photo = models.ImageField(
+        upload_to='readings/',
+        blank=True,
+        null=True,
+        verbose_name="Фото")
+
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Ким подано")
+
+    class Meta:
+        verbose_name = "Показник"
+        verbose_name_plural = "Показники (Історія)"
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.meter.number}: {self.value_total}"
+
+

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     'users',
     'cooperatives',
+    'meters',
 
 ]
 
@@ -121,3 +122,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 AUTH_USER_MODEL = 'users.CustomUser'
+
+
+LOGIN_REDIRECT_URL = 'dashboard'
+
+LOGOUT_REDIRECT_URL = 'login'

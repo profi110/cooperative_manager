@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Особистий кабінет</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max_width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        .meter-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; background: #fafafa; }
+        .meter-title { font-weight: bold; color: #2c3e50; font-size: 1.2em; }
+        .meter-info { color: #666; margin-top: 5px; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #27ae60; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px; }
+        .empty { color: #7f8c8d; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Привіт, {{ user.username }}! 👋</h1>
+    <p>Ваші лічильники:</p>
+
+    {% if meters %}
+        {% for meter in meters %}
+            <div class="meter-card">
+                <div class="meter-title">⚡ {{ meter.get_type_display }} (№ {{ meter.number }})</div>
+                <div class="meter-info">
+                    Адреса: {{ meter.membership.street.name }}, буд. {{ meter.membership.plot_number }}
+                </div>
+               <a href="{% url 'submit_reading' meter.id %}" class="btn">Передати показник</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty">У вас поки немає зареєстрованих лічильників.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

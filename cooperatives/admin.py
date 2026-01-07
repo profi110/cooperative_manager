@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Cooperative, Membership, Street
 
-# Register your models here.
+admin.site.register(Cooperative)
+admin.site.register(Membership)
+admin.site.register(Street)
