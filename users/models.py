@@ -3,8 +3,6 @@ from django.db import models
 
 
 class CustomUser(AbstractUser):
-    # Имя, Фамилия, Email, Пароль - уже внутри AbstractUser
-
     phone_number = models.CharField(
         max_length=20,
         blank=True,

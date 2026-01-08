@@ -1,21 +1,36 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
-from .forms import CustomUserCreationForm  # Переконайся, що forms.py існує!
+from django.contrib.auth.decorators import login_required
+from .forms import CustomUserCreationForm
+# 👇 Переконайтеся, що у вас у meters/forms.py клас називається саме ReadingForm!
+from meters.forms import ReadingForm
 
-# Головна сторінка (Landing Page)
-def home(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-    return render(request, 'home.html')
-
-# 👇 ОСЬ ЦІЄЇ ФУНКЦІЇ НЕ ВИСТАЧАЛО
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('dashboard')
+            return redirect('user_dashboard')
     else:
         form = CustomUserCreationForm()
     return render(request, 'registration/register.html', {'form': form})
+
+def home(request):
+    if request.user.is_authenticated:
+        return redirect('user_dashboard')
+    return render(request, 'home.html')
+
+@login_required
+def dashboard(request):
+    if request.method == 'POST':
+        form = ReadingForm(request.POST)
+        if form.is_valid():
+            reading = form.save(commit=False)
+            reading.user = request.user
+            reading.save()
+            return redirect('user_dashboard')
+    else:
+        form = ReadingForm()
+
+    return render(request, 'users/dashboard.html', {'form': form})

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Особистий кабінет</title>
+</head>
+<body>
+<h1>Особистий кабінет</h1>
+<p>Вітаємо, {{ user.username }}!</p>
+
+<hr>
+
+<h3>Передати показання лічильників</h3>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Відправити показання</button>
+</form>
+
+<hr>
+
+<form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Вийти</button>
+</form>
+</body>
+</html>
