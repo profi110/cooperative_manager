@@ -82,3 +82,28 @@ class Membership(models.Model):
         # Тепер у нас гарна адреса: "Вул. Садова, буд. 5 - Іван"
         address = f"{self.street.name}, {self.plot_number}" if self.street else f"Діл. {self.plot_number}"
         return f"{address} ({self.user.username})"
+
+
+    #Модель заявки реєстрації кооперативу
+
+class CooperativeApplication(models.Model):
+    STATUS_CHOICES = [
+        ('new', 'Нова заявка'),
+        ('approved', 'Схвалено'),
+        ('rejected', 'Відхилено'),
+    ]
+
+    name = models.CharField("Назва кооперативу", max_length=200)
+    address = models.CharField("Адреса будинку", max_length=255)
+    contact_name = models.CharField("ПІБ Голови/Контактної особи", max_length=100)
+    phone = models.CharField("Телефон", max_length=20)
+    email = models.EmailField("Email для зв'язку")
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new')
+
+    def __str__(self):
+        return f"Заявка від {self.name} ({self.contact_name})"
+
+    class Meta:
+        verbose_name = "Заявка на кооператив"
+        verbose_name_plural = "Заявки на кооперативи"

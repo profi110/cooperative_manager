@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Реєстрація нового мешканця</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align: center;">Реєстрація</h2>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label><b>{{ field.label }}</b></label>
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <small style="color: grey; display: block;">{{ field.help_text }}</small>
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <div class="error-box" style="padding: 5px; margin-top: 5px;">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn">Зареєструватися</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p>Вже маєте акаунт?</p>
+            <a href="{% url 'login' %}" style="color: #27ae60;">Увійти</a>
+        </div>
+
+        <a href="{% url 'home' %}" class="btn-back">На головну</a>
+    </div>
+</body>
+</html>

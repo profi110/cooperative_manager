@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Успіх!</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container" style="text-align: center;">
+        <h1 style="font-size: 50px;">✅</h1>
+        <h2>Заявку отримано!</h2>
+        <p>Ми зв'яжемося з вами найближчим часом.</p>
+        <br>
+        <a href="{% url 'home' %}" class="btn">На головну</a>
+    </div>
+</body>
+</html>

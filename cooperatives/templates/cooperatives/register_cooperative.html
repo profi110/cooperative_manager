@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Реєстрація Кооперативу</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2 style="text-align: center;">Заявка на підключення</h2>
+        <p style="text-align: center; color: grey; margin-bottom: 20px;">
+            Заповніть дані про ваш кооператив, і ми зв'яжемося з вами.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label><b>{{ field.label }}</b></label>
+
+                    {{ field }}
+
+                    {% if field.errors %}
+                        <div class="field-error" style="color: red; font-size: 0.9em;">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn" style="background-color: #2980b9; margin-top: 10px;">
+                Відправити заявку
+            </button>
+        </form>
+
+        <a href="{% url 'home' %}" class="btn-back">На головну</a>
+    </div>
+</body>
+</html>

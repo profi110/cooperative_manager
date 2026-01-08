@@ -1,29 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <title>Передати показник</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max_width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        .form-control { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-        .btn { padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; }
-        .btn:hover { background-color: #219150; }
-        .btn-back { display: block; text-align: center; margin-top: 10px; color: #7f8c8d; text-decoration: none;}
-        .zone-info { background: #e8f6f3; padding: 10px; border-radius: 5px; margin-bottom: 15px; color: #16a085; }
-
-        /* Стиль для блоку помилок */
-        .error-box {
-            background-color: #ffe6e6;
-            color: #d8000c;
-            border: 1px solid #d8000c;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .error-list { margin: 0; padding-left: 20px; }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
 <div class="container">
