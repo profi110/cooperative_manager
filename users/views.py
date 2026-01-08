@@ -24,12 +24,14 @@ def home(request):
 @login_required
 def dashboard(request):
     if request.method == 'POST':
-        form = ReadingForm(request.POST)
+        form = ReadingForm(request.POST, request.FILES)
         if form.is_valid():
             reading = form.save(commit=False)
             reading.user = request.user
             reading.save()
             return redirect('user_dashboard')
+        else:
+            print("🛑 ПОМИЛКИ ФОРМИ:", form.errors)
     else:
         form = ReadingForm()
 

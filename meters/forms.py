@@ -5,7 +5,7 @@ from .models import Reading
 class ReadingForm(forms.ModelForm):
     class Meta:
         model = Reading
-        fields = ['value_total', 'value_day', 'value_night', 'photo']
+        fields = ['meter', 'value_total', 'value_day', 'value_night', 'photo']
         widgets = {
             'value_total': forms.NumberInput(
                 attrs={'class': 'form-control', 'placeholder': 'Загальний'}),

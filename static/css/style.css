@@ -7,16 +7,24 @@ body {
     margin: 0;
     padding: 20px;
     color: #333;
+
+    /* Центрування контенту по вертикалі (для дашборду) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
 }
 
 /* Основний контейнер (картка по центру) */
-.container {
-    max-width: 500px; /* ✅ Виправлено: вузька колонка */
-    margin: 40px auto; /* Центрування по горизонталі */
+.container, .dashboard-card {
+    width: 100%;
+    max-width: 500px; /* Вузька колонка */
+    margin: 20px auto;
     background: white;
     padding: 30px;
     border-radius: 10px; /* Закруглені кути */
     box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Тінь */
+    box-sizing: border-box;
 }
 
 /* Заголовки */
@@ -26,53 +34,63 @@ h1, h2, h3 {
     margin-top: 0;
 }
 
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
+
 /* =========================================
    2. ФОРМИ ТА ПОЛЯ ВВОДУ
    ========================================= */
 .form-group {
     margin-bottom: 20px; /* Відступ між полями */
+    text-align: left;
 }
 
-/* Стилізація всіх текстових полів, списків та текстових областей */
+/* Стилізація підписів (Label) */
+.form-group label {
+    display: block;      /* Щоб підпис був над полем */
+    margin-bottom: 8px;  /* Відступ від тексту до поля */
+    font-weight: 600;
+    color: #34495e;
+}
+
+/* Стилізація всіх текстових полів */
 input[type="text"],
 input[type="password"],
 input[type="email"],
 input[type="number"],
-select,          /* Випадаючі списки */
-textarea {       /* Великі текстові поля */
+select,
+textarea {
     width: 100%;
     padding: 12px;
-    margin-top: 8px;
-    box-sizing: border-box; /* Щоб відступи не ламали ширину */
+    margin-top: 0; /* Прибираємо margin, бо керуємо через label */
+    box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 16px;
     font-family: inherit;
-    transition: border-color 0.3s ease; /* Плавна зміна кольору */
+    transition: all 0.3s ease;
+    background-color: #fff;
 }
 
 /* Ефект при натисканні на поле */
 input:focus, select:focus, textarea:focus {
-    border-color: #2980b9; /* Синій колір рамки */
+    border-color: #27ae60; /* Зелена рамка (в стиль кнопок) */
     outline: none;
-    box-shadow: 0 0 8px rgba(41, 128, 185, 0.2); /* Легке світіння */
-}
-
-/* Підписи до полів */
-label {
-    font-weight: 600;
-    color: #34495e;
+    box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1); /* Легке зелене світіння */
 }
 
 /* =========================================
    3. КНОПКИ
    ========================================= */
-/* Основна кнопка (за замовчуванням зелена) */
-.btn {
+/* Базова кнопка (і для Submit) */
+.btn, .btn-submit, button[type="submit"] {
     display: block;
     width: 100%;
     padding: 12px;
-    background-color: #27ae60;
+    background-color: #27ae60; /* Зелений */
     color: white;
     border: none;
     border-radius: 6px;
@@ -83,10 +101,31 @@ label {
     text-decoration: none;
     box-sizing: border-box;
     transition: background-color 0.3s;
+    margin-top: 10px;
 }
 
-.btn:hover {
-    background-color: #219150; /* Темніший зелений при наведенні */
+.btn:hover, .btn-submit:hover, button[type="submit"]:hover {
+    background-color: #219150; /* Темніший зелений */
+}
+
+/* Червона кнопка "Вихід" (Logout) */
+.btn-logout {
+    background-color: #e74c3c !important; /* Червоний */
+    margin-top: 20px;
+}
+
+.btn-logout:hover {
+    background-color: #c0392b !important; /* Темніший червоний */
+}
+
+/* 👇👇👇 НОВА СИНЯ КНОПКА "НА ГОЛОВНУ" 👇👇👇 */
+.btn-home {
+    background-color: #3498db !important; /* Приємний синій */
+    margin-top: 10px;
+}
+
+.btn-home:hover {
+    background-color: #2980b9 !important; /* Темніший синій при наведенні */
 }
 
 /* Кнопка "Назад" (сіре посилання) */
@@ -107,7 +146,7 @@ label {
 /* =========================================
    4. ПОВІДОМЛЕННЯ ТА ПОМИЛКИ
    ========================================= */
-/* Блок загальної помилки */
+/* Загальний блок помилки */
 .error-box {
     background-color: #ffe6e6;
     color: #d8000c;
@@ -118,14 +157,15 @@ label {
     font-size: 14px;
 }
 
-/* Текст помилки під конкретним полем */
-.field-error {
+/* Помилка під конкретним полем */
+.error-message, .field-error {
     color: #e74c3c;
     font-size: 0.85em;
     margin-top: 5px;
+    text-align: left;
 }
 
-/* Блок "Двозонний лічильник" (блакитний) */
+/* Блок "Двозонний лічильник" (інфо) */
 .zone-info {
     background: #e8f6f3;
     padding: 15px;
@@ -138,30 +178,27 @@ label {
 /* =========================================
    5. ГОЛОВНА СТОРІНКА (HOME PAGE)
    ========================================= */
-/* Сітка для карток вибору (Мешканець / Голова) */
 .welcome-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Дві рівні колонки */
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-top: 30px;
 }
 
-/* Картка всередині сітки */
 .card {
     background: #fff;
     padding: 25px;
     border-radius: 8px;
     border: 1px solid #eee;
     text-align: center;
-    transition: transform 0.2s; /* Анімація при наведенні */
+    transition: transform 0.2s;
 }
 
 .card:hover {
-    transform: translateY(-5px); /* Картка трохи підстрибує */
+    transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* Адаптивність: на телефонах картки стають одна під одною */
 @media (max-width: 600px) {
     .welcome-grid {
         grid-template-columns: 1fr;

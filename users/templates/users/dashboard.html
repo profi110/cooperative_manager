@@ -1,28 +1,48 @@
-<!DOCTYPE html>
+{% load static %} <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <title>Особистий кабінет</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-<h1>Особистий кабінет</h1>
-<p>Вітаємо, {{ user.username }}!</p>
 
-<hr>
+<div class="dashboard-card"><h1>👋 Привіт, {{ user.username }}!</h1>
+    <p style="color: #7f8c8d;">Це твій особистий кабінет</p>
 
-<h3>Передати показання лічильників</h3>
+    <hr>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Відправити показання</button>
-</form>
+    <h3>📊 Передати показання</h3>
 
-<hr>
+    <form method="post" class="styled-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="error-box">
+                {% for error in form.non_field_errors %}
+                    <p>⚠️ {{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="error-message">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
 
-<form action="{% url 'logout' %}" method="post">
-    {% csrf_token %}
-    <button type="submit">Вийти</button>
-</form>
+        <button type="submit" class="btn-submit">Відправити показання</button>
+    </form>
+
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-logout">🚪 Вийти</button>
+    </form>
+</div>
+
 </body>
 </html>
