@@ -15,6 +15,23 @@ body {
     min-height: 100vh;
 }
 
+/* style.css */
+#coop-check-icon {
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+#group-street {
+    display: none; /* Спочатку приховуємо вибір вулиці */
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 /* Основний контейнер (картка по центру) */
 .container, .dashboard-card {
     width: 100%;

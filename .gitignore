@@ -1,6 +1,23 @@
-db.sqlite3
+# Скрипт очищення
+clean_comments.py
+
+# Віртуальне середовище
 .venv/
+env/
 venv/
+ENV/
+
+# Python (кеш)
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# База даних (зазвичай її не закидають, щоб у кожного була своя)
+db.sqlite3
+
+# Налаштування PyCharm / VS Code
+.idea/
+.vscode/
+
+# Системні файли
 .DS_Store

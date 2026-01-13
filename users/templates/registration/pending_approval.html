@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title>Заявку відправлено</title>
+</head>
+<body>
+    <div class="container" style="text-align: center; margin-top: 100px;">
+        <h2>✅ Заявку відправлено!</h2>
+        <p>Ваші дані передані голові кооперативу <strong>{{ coop_name }}</strong>.</p>
+        <p>Зачекайте на підтвердження головою.</p>
+        <hr>
+        <a href="{% url 'home' %}" class="btn">На головну</a>
+        <br><br>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" style="background:none; border:none; color:blue; text-decoration:underline; cursor:pointer;">
+                Вийти, щоб зайти під іншим акаунтом
+            </button>
+        </form>
+    </div>
+</body>
+</html>

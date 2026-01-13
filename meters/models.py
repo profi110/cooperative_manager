@@ -73,13 +73,11 @@ class Reading(models.Model):
         verbose_name="Лічильник",
         related_name='readings')
 
-    # ПЕРЕЙМЕНУВАЛИ value -> value_total (Обов'язкове)
     value_total = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         verbose_name="Загальний (Т)")
 
-    # НОВІ ПОЛЯ (Необов'язкові, blank=True)
     value_day = models.DecimalField(
         max_digits=12,
         decimal_places=2,

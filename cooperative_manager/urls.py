@@ -1,16 +1,24 @@
 from django.contrib import admin
 from django.urls import path, include
-from users import views as user_views
-# 👇 Додайте цей імпорт, якщо його немає!
 from cooperatives import views as coop_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', user_views.home, name='home'),
-    path('dashboard/', user_views.dashboard, name='user_dashboard'),
-    path('register-coop/', coop_views.register_cooperative,name='register_coop'),
 
-    path('users/', include('django.contrib.auth.urls')),
-    path('register/', user_views.register, name='register'),
-    path('meters/', include('meters.urls')),
+    path('', include('users.urls')),
+
+    path('ajax/check-coop/', coop_views.check_coop_id, name='check_coop_id'),
+    path(
+        'register-coop/', coop_views.register_cooperative,
+        name='register_coop'),
+    path(
+        'chairman/dashboard/', coop_views.chairman_dashboard,
+        name='chairman_dashboard'),
+    path('chairman/add-street/', coop_views.add_street, name='add_street'),
+    path(
+        'chairman/delete-street/<int:street_id>/', coop_views.delete_street,
+        name='delete_street'),
+    path(
+        'chairman/approve/<int:user_id>/', coop_views.approve_resident,
+        name='approve_resident'),
     ]

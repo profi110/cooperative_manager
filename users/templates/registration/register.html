@@ -3,42 +3,90 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Реєстрація нового мешканця</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title>Реєстрація</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h2 style="text-align: center;">Реєстрація</h2>
+    <div class="container" style="max-width: 500px; margin-top: 50px;">
+        <div class="card shadow" style="padding: 30px; border-radius: 15px; background: white;">
+            <h2 class="text-center">📝 Реєстрація</h2>
+            <p class="text-center text-muted">Створіть профіль для подачі показників</p>
+            <hr>
 
-        <form method="post">
-            {% csrf_token %}
+            <form method="post" id="registrationForm">
+                {% csrf_token %}
 
-            {% for field in form %}
-                <div class="form-group">
-                    <label><b>{{ field.label }}</b></label>
-                    {{ field }}
+                {% for field in form %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label><strong>{{ field.label }}</strong></label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small class="text-muted" style="display: block;">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p style="color: red; font-size: 0.8rem;">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
 
-                    {% if field.help_text %}
-                        <small style="color: grey; display: block;">{{ field.help_text }}</small>
-                    {% endif %}
-
-                    {% if field.errors %}
-                        <div class="error-box" style="padding: 5px; margin-top: 5px;">
-                            {{ field.errors }}
-                        </div>
-                    {% endif %}
+                <div id="coop-info" style="margin: 10px 0; padding: 10px; border-radius: 5px; display: none;">
+                    <span id="coop-message"></span>
                 </div>
-            {% endfor %}
 
-            <button type="submit" class="btn">Зареєструватися</button>
-        </form>
+                <button type="submit" class="btn btn-success" style="width: 100%; padding: 10px; background-color: #2ecc71; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    Відправити заявку
+                </button>
+            </form>
 
-        <div style="text-align: center; margin-top: 20px;">
-            <p>Вже маєте акаунт?</p>
-            <a href="{% url 'login' %}" style="color: #27ae60;">Увійти</a>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{% url 'home' %}" style="text-decoration: none; color: #7f8c8d;">⬅️ Скасувати та повернутися</a>
+            </div>
         </div>
-
-        <a href="{% url 'home' %}" class="btn-back">На головну</a>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            // Знаходимо поля за їх ID (які ми прописали в forms.py)
+            const coopInput = $('#id_coop_id');
+            const streetSelect = $('#id_street');
+            const infoBox = $('#coop-info');
+            const messageSpan = $('#coop-message');
+
+            coopInput.on('input', function() {
+                const coopId = $(this).val();
+
+                if (coopId.length > 0) {
+                    $.ajax({
+                        url: "{% url 'check_coop_id' %}",
+                        data: { 'coop_id': coopId },
+                        success: function(data) {
+                            if (data.exists) {
+                                // 1. Показуємо успіх і назву
+                                infoBox.show().css('background-color', '#d4edda').css('color', '#155724');
+                                messageSpan.text("✅ Кооператив знайдено: " + data.name);
+
+                                // 2. Очищуємо та заповнюємо список вулиць
+                                streetSelect.empty();
+                                streetSelect.append('<option value="">-- Оберіть вулицю --</option>');
+                                data.streets.forEach(function(street) {
+                                    streetSelect.append('<option value="' + street + '">' + street + '</option>');
+                                });
+                                streetSelect.parent().show(); // Показуємо поле вулиці
+                            } else {
+                                // Якщо не знайдено
+                                infoBox.show().css('background-color', '#f8d7da').css('color', '#721c24');
+                                messageSpan.text("❌ Кооператив з таким ID не існує");
+                                streetSelect.empty().parent().hide();
+                            }
+                        }
+                    });
+                } else {
+                    infoBox.hide();
+                    streetSelect.parent().hide();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

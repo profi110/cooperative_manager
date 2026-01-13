@@ -1,16 +1,34 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser
-from cooperatives.models import Cooperative
+from cooperatives.models import Cooperative, Street
+
 
 class CustomUserCreationForm(UserCreationForm):
-    cooperative = forms.ModelChoiceField(
-        queryset=Cooperative.objects.all(),
-        label="Оберіть ваш кооператив",
-        required=True,
-        empty_label="-- Натисніть, щоб вибрати --"
-    )
+    coop_id = forms.CharField(
+        label="🏢 ID Кооперативу",
+        widget=forms.TextInput(
+            attrs={'id': 'id_coop_id', 'placeholder': 'Наприклад: 1'})
+        )
 
-    class Meta:
+    street = forms.CharField(
+        label="📍 Оберіть вашу вулицю",
+        widget=forms.Select(attrs={'id': 'id_street'}),
+        required=True
+        )
+
+    class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ('username', 'email', 'cooperative')
+        fields = ('username', 'email', 'coop_id', 'street')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'coop_id' in self.data:
+            try:
+                coop_id = self.data.get('coop_id')
+                cooperative = Cooperative.objects.get(id=coop_id)
+                streets = cooperative.street_set.all()
+                self.fields['street'].widget.choices = [(s.name, s.name) for s
+                                                        in streets]
+            except (ValueError, TypeError, Cooperative.DoesNotExist):
+                pass

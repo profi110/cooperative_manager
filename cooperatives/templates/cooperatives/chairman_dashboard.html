@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section" style="margin-bottom: 30px;">
+        <h2>🏢 Кабінет голови: {{ cooperative.title }}</h2>
+        <hr>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm"
+                 style="padding: 20px; background-color: #f8f9fa; border-radius: 10px;">
+                <h3 style="font-size: 1.2rem;">➕ Додати нову вулицю</h3>
+                <form action="{% url 'add_street' %}" method="post"
+                      style="margin-top: 15px;">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="text" name="street_name"
+                               class="form-control"
+                               placeholder="Назва (напр. Садова)" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block"
+                            style="margin-top: 10px;">
+                        Зберегти вулицю
+                    </button>
+                </form>
+
+                <h4 style="font-size: 1rem; margin-top: 25px; color: #555;">📍
+                    Существующие улицы:</h4>
+                <ul class="list-group list-group-flush"
+                    style="max-height: 200px; overflow-y: auto; border: 1px solid #eee;">
+                    {% for street in cooperative.street_set.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                        style="font-size: 0.9rem; padding: 8px 12px;">
+                        {{ street.name }}
+
+                        <form action="{% url 'delete_street' street.id %}"
+                              method="post"
+                              onsubmit="return confirm('Вы уверены, что хотите удалить эту улицу?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm text-danger"
+                                    style="background: none; border: none; font-size: 1.2rem; line-height: 1;">
+                                &times;
+                            </button>
+                        </form>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Улицы еще не
+                        добавлены
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm"
+                 style="padding: 20px; border-radius: 10px;">
+                <h3 style="font-size: 1.2rem; color: #2c3e50;">⏳ Заявки на
+                    реєстрацію (очікують)</h3>
+                <p class="text-muted" style="font-size: 0.9rem;">Підтвердіть
+                    мешканців, щоб вони могли подавати показники
+                    лічильників.</p>
+
+                <table class="table table-hover" style="margin-top: 15px;">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Користувач</th>
+                        <th>Email</th>
+                        <th>Вулиця</th>
+                        <th>Дія</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for resident in residents %}
+                    <tr>
+                        <td><strong>{{ resident.username }}</strong></td>
+                        <td>{{ resident.email }}</td>
+                        <td><span
+                                class="badge badge-info">{{ resident.street }}</span>
+                        </td>
+                        <td>
+                            <form action="{% url 'approve_resident' resident.id %}"
+                                  method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="btn btn-success btn-sm">
+                                    Підтвердити
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">
+                            Нових заявок наразі немає
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        transition: transform 0.2s;
+    }
+
+    .btn-success {
+        background-color: #27ae60;
+        border: none;
+    }
+
+    .btn-primary {
+        background-color: #2980b9;
+        border: none;
+    }
+
+    .table th {
+        border-top: none;
+    }
+</style>
+{% endblock %}
