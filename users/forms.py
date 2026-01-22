@@ -16,10 +16,14 @@ class CustomUserCreationForm(UserCreationForm):
         widget=forms.Select(attrs={'id': 'id_street'}),
         required=True
         )
+    house_number = forms.CharField(
+        label="🏠 Номер будинку",
+        widget=forms.TextInput(attrs={'placeholder': 'Наприклад: 12А'})
+        )
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ('username', 'email', 'coop_id', 'street')
+        fields = ('username', 'email', 'coop_id', 'street', 'house_number')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

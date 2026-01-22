@@ -11,6 +11,7 @@ class Meter(models.Model):
         ('global', 'Головний (Баланс кооперативу)'),
         ]
 
+    # ВИПРАВЛЕНО: on_delete=models.CASCADE замість on_view
     cooperative = models.ForeignKey(
         Cooperative,
         on_delete=models.CASCADE,
@@ -45,8 +46,8 @@ class Meter(models.Model):
 
     number = models.CharField(
         max_length=50,
+        unique=True,
         verbose_name="Серійний номер")
-
 
     is_two_zone = models.BooleanField(
         default=False,
@@ -113,7 +114,25 @@ class Reading(models.Model):
         verbose_name_plural = "Показники (Історія)"
         ordering = ['-date']
 
+    def get_cost(self):
+        """Розрахунок вартості на основі тарифів кооперативу"""
+        previous = Reading.objects.filter(
+            meter=self.meter,
+            date__lt=self.date
+            ).order_by('-date').first()
+
+        p_total = previous.value_total if previous else self.meter.initial_value
+        p_day = previous.value_day if (previous and previous.value_day) else 0
+        p_night = previous.value_night if (
+                    previous and previous.value_night) else 0
+
+        coop = self.meter.cooperative
+        if self.meter.is_two_zone:
+            diff_day = self.value_day - p_day
+            diff_night = self.value_night - p_night
+            return (diff_day * coop.price_day) + (diff_night * coop.price_night)
+
+        return (self.value_total - p_total) * coop.price_day
+
     def __str__(self):
         return f"{self.meter.number}: {self.value_total}"
-
-

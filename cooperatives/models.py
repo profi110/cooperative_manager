@@ -5,7 +5,12 @@ from django.conf import settings
 class Cooperative(models.Model):
     title = models.CharField(max_length=200, verbose_name="Назва кооперативу")
     inn = models.CharField(max_length=20, verbose_name="ЄДРПОУ", blank=True)
-
+    price_day = models.DecimalField(
+        max_digits=10, decimal_places=2, default=2.64,
+        verbose_name="Тариф День (грн/кВт)")
+    price_night = models.DecimalField(
+        max_digits=10, decimal_places=2, default=1.32,
+        verbose_name="Тариф Ніч (грн/кВт)")
     class Meta:
         verbose_name = "Кооператив"
         verbose_name_plural = "Кооперативи"

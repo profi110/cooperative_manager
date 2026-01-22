@@ -1,48 +1,37 @@
-{% load static %} <!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Особистий кабінет</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow mx-auto" style="max-width: 600px; border-radius: 15px;">
+        <div class="card-body text-center">
+            <h1 class="mb-4">👋 Привіт, {{ user.username }}!</h1>
+            <p class="text-muted">Ваша адреса: <strong>{{ membership.street.name }}, діл. {{ membership.plot_number }}</strong></p>
 
-<div class="dashboard-card"><h1>👋 Привіт, {{ user.username }}!</h1>
-    <p style="color: #7f8c8d;">Це твій особистий кабінет</p>
+            {% if meter %}
+                <div class="alert alert-info py-2">Лічильник: №{{ meter.number }}</div>
+                <a href="{% url 'submit_reading' %}" class="btn btn-success btn-lg btn-block py-3 font-weight-bold">
+                    📊 Передати показники
+                </a>
+            {% else %}
+                <div class="alert alert-warning">Очікуйте на створення лічильника головою кооперативу.</div>
+            {% endif %}
+        </div>
+    </div>
 
-    <hr>
-
-    <h3>📊 Передати показання</h3>
-
-    <form method="post" class="styled-form" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% if form.non_field_errors %}
-            <div class="error-box">
-                {% for error in form.non_field_errors %}
-                    <p>⚠️ {{ error }}</p>
+    {% if readings %}
+    <div class="card mt-4 mx-auto border-0 shadow-sm" style="max-width: 600px;">
+        <table class="table mb-0">
+            <thead class="bg-light"><tr><th>Дата</th><th>кВт⋅год</th><th>Сума</th></tr></thead>
+            <tbody>
+                {% for r in readings %}
+                <tr>
+                    <td>{{ r.date|date:"d.m" }}</td>
+                    <td>{{ r.value_total }}</td>
+                    <td class="text-success font-weight-bold">{{ r.get_cost|floatformat:2 }} грн</td>
+                </tr>
                 {% endfor %}
-            </div>
-        {% endif %}
-        {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                    <div class="error-message">
-                        {{ field.errors }}
-                    </div>
-                {% endif %}
-            </div>
-        {% endfor %}
-
-        <button type="submit" class="btn-submit">Відправити показання</button>
-    </form>
-
-    <form action="{% url 'logout' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-logout">🚪 Вийти</button>
-    </form>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
-
-</body>
-</html>
+{% endblock %}

@@ -5,13 +5,11 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <title>Реєстрація</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container" style="max-width: 500px; margin-top: 50px;">
         <div class="card shadow" style="padding: 30px; border-radius: 15px; background: white;">
             <h2 class="text-center">📝 Реєстрація</h2>
-            <p class="text-center text-muted">Створіть профіль для подачі показників</p>
             <hr>
 
             <form method="post" id="registrationForm">
@@ -21,9 +19,6 @@
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label><strong>{{ field.label }}</strong></label>
                         {{ field }}
-                        {% if field.help_text %}
-                            <small class="text-muted" style="display: block;">{{ field.help_text }}</small>
-                        {% endif %}
                         {% for error in field.errors %}
                             <p style="color: red; font-size: 0.8rem;">{{ error }}</p>
                         {% endfor %}
@@ -38,52 +33,59 @@
                     Відправити заявку
                 </button>
             </form>
-
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="{% url 'home' %}" style="text-decoration: none; color: #7f8c8d;">⬅️ Скасувати та повернутися</a>
-            </div>
         </div>
     </div>
 
     <script>
-        $(document).ready(function() {
-            // Знаходимо поля за їх ID (які ми прописали в forms.py)
-            const coopInput = $('#id_coop_id');
-            const streetSelect = $('#id_street');
-            const infoBox = $('#coop-info');
-            const messageSpan = $('#coop-message');
+        document.addEventListener('DOMContentLoaded', function() {
+            const coopInput = document.getElementById('id_coop_id');
+            const streetSelect = document.getElementById('id_street');
+            const infoBox = document.getElementById('coop-info');
+            const messageSpan = document.getElementById('coop-message');
 
-            coopInput.on('input', function() {
-                const coopId = $(this).val();
+            coopInput.addEventListener('input', function() {
+                const coopId = this.value;
 
                 if (coopId.length > 0) {
-                    $.ajax({
-                        url: "{% url 'check_coop_id' %}",
-                        data: { 'coop_id': coopId },
-                        success: function(data) {
+                    // Використовуємо fetch замість AJAX
+                    fetch(`{% url 'check_coop_id' %}?coop_id=${coopId}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(data => {
                             if (data.exists) {
-                                // 1. Показуємо успіх і назву
-                                infoBox.show().css('background-color', '#d4edda').css('color', '#155724');
-                                messageSpan.text("✅ Кооператив знайдено: " + data.name);
+                                // Налаштування при успішному пошуку
+                                infoBox.style.display = 'block';
+                                infoBox.style.backgroundColor = '#d4edda';
+                                infoBox.style.color = '#155724';
+                                messageSpan.textContent = "✅ Кооператив знайдено: " + data.name;
 
-                                // 2. Очищуємо та заповнюємо список вулиць
-                                streetSelect.empty();
-                                streetSelect.append('<option value="">-- Оберіть вулицю --</option>');
-                                data.streets.forEach(function(street) {
-                                    streetSelect.append('<option value="' + street + '">' + street + '</option>');
+                                // Очищення та заповнення списку вулиць
+                                streetSelect.innerHTML = '<option value="">-- Оберіть вулицю --</option>';
+                                data.streets.forEach(street => {
+                                    const option = document.createElement('option');
+                                    option.value = street;
+                                    option.textContent = street;
+                                    streetSelect.appendChild(option);
                                 });
-                                streetSelect.parent().show(); // Показуємо поле вулиці
+                                streetSelect.parentElement.style.display = 'block';
                             } else {
-                                // Якщо не знайдено
-                                infoBox.show().css('background-color', '#f8d7da').css('color', '#721c24');
-                                messageSpan.text("❌ Кооператив з таким ID не існує");
-                                streetSelect.empty().parent().hide();
+                                // Налаштування, якщо не знайдено
+                                infoBox.style.display = 'block';
+                                infoBox.style.backgroundColor = '#f8d7da';
+                                infoBox.style.color = '#721c24';
+                                messageSpan.textContent = "❌ Кооператив з таким ID не існує";
+                                streetSelect.innerHTML = '';
+                                streetSelect.parentElement.style.display = 'none';
                             }
-                        }
-                    });
+                        })
+                        .catch(error => {
+                            console.error('Помилка Fetch:', error);
+                        });
                 } else {
-                    infoBox.hide();
-                    streetSelect.parent().hide();
+                    infoBox.style.display = 'none';
+                    streetSelect.parentElement.style.display = 'none';
                 }
             });
         });

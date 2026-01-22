@@ -40,8 +40,8 @@ INSTALLED_APPS = [
 
     'users',
     'cooperatives',
+    'staff',
     'meters',
-
 ]
 
 MIDDLEWARE = [

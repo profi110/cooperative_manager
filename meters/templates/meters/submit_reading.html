@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">📤 Подати показники</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info py-2">
+                        <strong>Лічильник:</strong> №{{ meter.number }} <br>
+                        <strong>Тип:</strong> {{ meter.get_hierarchy_display }}
+                        ({% if meter.is_two_zone %}День/Ніч{% else %}Звичайний{% endif %})
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label>Загальний показник (кВт⋅год)</label>
+                            {{ form.value_total }}
+                            <small class="text-muted">Введіть поточне значення на табло лічильника.</small>
+                        </div>
+
+                        {% if meter.is_two_zone %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Т1 (День)</label>
+                                    {{ form.value_day }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Т2 (Ніч)</label>
+                                    {{ form.value_night }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="form-group mt-3">
+                            <label>📸 Фото лічильника (за бажанням)</label>
+                            {{ form.photo }}
+                            <small class="text-muted d-block">Ви можете додати фото для підтвердження показників у разі спірних питань.</small>
+                        </div>
+                        <hr>
+                        <button type="submit" class="btn btn-success btn-block btn-lg">Надіслати дані</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
