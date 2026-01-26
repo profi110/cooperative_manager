@@ -82,10 +82,10 @@ def all_readings(request):
             })
 
 
-# Функції для вулиць
 @login_required
 @chairman_required
 def add_street(request):
+    """Додавання нової вулиці"""
     if request.method == 'POST':
         name = request.POST.get('street_name')
         membership = Membership.objects.get(user=request.user, role='chairman')
@@ -96,10 +96,105 @@ def add_street(request):
 
 @login_required
 @chairman_required
-def delete_street(request, street_id):
+def edit_street(request, street_id):
+    """Зміна назви вулиці"""
     membership = Membership.objects.get(user=request.user, role='chairman')
     street = get_object_or_404(
         Street, id=street_id, cooperative=membership.cooperative)
+
+    if request.method == 'POST':
+        new_name = request.POST.get('street_name')
+        if new_name:
+            street.name = new_name
+            street.save()
+        return redirect('staff_dashboard')
+
+    return render(request, 'staff/edit_street.html', {'street': street})
+
+
+@login_required
+@chairman_required
+def delete_street(request, street_id):
+    """Видалення вулиці"""
+    membership = Membership.objects.get(user=request.user, role='chairman')
+    street = get_object_or_404(
+        Street, id=street_id, cooperative=membership.cooperative)
+
     if request.method == 'POST':
         street.delete()
     return redirect('staff_dashboard')
+
+@login_required
+@chairman_required
+def voting_list(request):
+    """Сторінка для майбутніх голосувань кооперативу"""
+    return render(request, 'staff/voting.html')
+
+
+@login_required
+@chairman_required
+def edit_member(request, membership_id):
+    """Редагування даних мешканця"""
+    membership = get_object_or_404(Membership, id=membership_id)
+    chairman_mem = Membership.objects.get(user=request.user, role='chairman')
+
+    # Перевірка безпеки: чи належить мешканець до кооперативу цього голови
+    if membership.cooperative != chairman_mem.cooperative:
+        return redirect('staff_manage')
+
+    if request.method == 'POST':
+        user = membership.user
+        user.username = request.POST.get('username')
+        user.save()
+
+        membership.plot_number = request.POST.get('plot_number')
+        street_id = request.POST.get('street')
+        if street_id:
+            membership.street = Street.objects.get(id=street_id)
+
+        membership.role = request.POST.get('role')
+        membership.save()
+        return redirect('staff_manage')
+
+    streets = Street.objects.filter(cooperative=chairman_mem.cooperative)
+    return render(
+        request, 'staff/edit_member.html', {
+            'membership': membership,
+            'streets': streets
+            })
+
+
+@login_required
+@chairman_required
+def manage_coop(request):
+    """Вивід списку всіх підтверджених мешканців"""
+    chairman_mem = Membership.objects.get(user=request.user, role='chairman')
+    cooperative = chairman_mem.cooperative
+
+    # Отримуємо всіх членів кооперативу, крім самого голови
+    members = Membership.objects.filter(
+        cooperative=cooperative
+        ).exclude(user=request.user).select_related('user', 'street')
+
+    return render(
+        request, 'staff/manage.html', {
+            'members': members,
+            'cooperative': cooperative
+            })
+
+
+@login_required
+@chairman_required
+def delete_member(request, membership_id):
+    """Метод для видалення мешканця через POST-запит"""
+    if request.method == 'POST':
+        membership = get_object_or_404(Membership, id=membership_id)
+        chairman_mem = Membership.objects.get(
+            user=request.user, role='chairman')
+
+        # Перевірка: голова може видаляти лише мешканців свого кооперативу
+        if membership.cooperative == chairman_mem.cooperative:
+            user_to_delete = membership.user
+            user_to_delete.delete()  # Видалення користувача автоматично видаляє його Membership
+
+    return redirect('staff_manage')

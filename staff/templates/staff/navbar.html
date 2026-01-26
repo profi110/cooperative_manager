@@ -1,0 +1,27 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <a class="navbar-brand font-weight-bold" href="{% url 'staff_dashboard' %}">🏗️ Sadochok Admin</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#staffNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="staffNavbar">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'staff_readings' %}">📊 Показники</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'staff_voting' %}">🗳️ Голосування</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'staff_manage' %}">⚙️ Управління</a>
+                </li>
+            </ul>
+            <span class="navbar-text mr-3">Голова: {{ user.username }}</span>
+            <form action="{% url 'logout' %}" method="post" class="form-inline my-2 my-lg-0">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm" type="submit">Вихід</button>
+            </form>
+        </div>
+    </div>
+</nav>

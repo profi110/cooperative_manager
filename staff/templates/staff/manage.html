@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% include 'staff/navbar.html' %}
+
+    <div class="container mt-4">
+        <h2 class="mb-4">⚙️ Управління мешканцями: {{ cooperative.title }}</h2>
+
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Користувач</th>
+                            <th>Адреса (Вулиця/Ділянка)</th>
+                            <th>Роль</th>
+                            <th class="text-right">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in members %}
+                        <tr>
+                            <td><strong>{{ member.user.username }}</strong></td>
+                            <td>{{ member.street.name|default:"—" }}, діл. {{ member.plot_number }}</td>
+                            <td><span class="badge badge-info">{{ member.get_role_display }}</span></td>
+                            <td class="text-right">
+                                <a href="{% url 'staff_edit_member' member.id %}" class="btn btn-sm btn-outline-primary">📝</a>
+
+                                <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ member.id }}">
+                                    🗑️ Видалити
+                                </button>
+
+                                <div class="modal fade" id="deleteModal{{ member.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content text-left">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">⚠️ Підтвердження видалення</h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Ви впевнені, що хочете видалити мешканця <strong>{{ member.user.username }}</strong>?<br>
+                                                <small class="text-muted">Це також видалить усі його лічильники та історію показників.</small>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <form action="{% url 'staff_delete_member' member.id %}" method="post">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger font-weight-bold">Так, видалити назавжди</button>
+                                                </form>
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Скасувати</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Мешканців не знайдено</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

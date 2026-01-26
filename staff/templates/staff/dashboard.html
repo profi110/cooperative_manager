@@ -1,45 +1,122 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4 border-warning shadow-sm">
-                <div class="card-header bg-warning font-weight-bold">💰 Тарифи (грн/кВт)</div>
-                <div class="card-body">
-                    <form action="{% url 'update_tariffs' %}" method="post">
-                        {% csrf_token %}
-                        <div class="form-row">
-                            <div class="col"><label class="small">День</label><input type="number" name="price_day" step="0.01" value="{{ cooperative.price_day }}" class="form-control"></div>
-                            <div class="col"><label class="small">Ніч</label><input type="number" name="price_night" step="0.01" value="{{ cooperative.price_night }}" class="form-control"></div>
-                        </div>
-                        <button type="submit" class="btn btn-dark btn-sm btn-block mt-3">Зберегти тарифи</button>
-                    </form>
+    {% include 'staff/navbar.html' %}
+
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">🏢 Керування кооперативом: {{ cooperative.title }}</h2>
+
+        <div class="row">
+            <div class="col-md-4">
+
+                <div class="card mb-4 border-warning shadow-sm">
+                    <div class="card-header bg-warning font-weight-bold text-dark">
+                        💰 Тарифи (грн/кВт)
+                    </div>
+                    <div class="card-body">
+                        <form action="{% url 'update_tariffs' %}" method="post">
+                            {% csrf_token %}
+                            <div class="form-row">
+                                <div class="col">
+                                    <label class="small">День</label>
+                                    <input type="number" name="price_day" step="0.01" value="{{ cooperative.price_day|stringformat:'.2f' }}" class="form-control">
+                                </div>
+                                <div class="col">
+                                    <label class="small">Ніч</label>
+                                    <input type="number" name="price_night" step="0.01" value="{{ cooperative.price_night|stringformat:'.2f' }}" class="form-control">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-dark btn-sm btn-block mt-3">Зберегти тарифи</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-primary text-white font-weight-bold">
+                        📍 Вулиці
+                    </div>
+                    <div class="card-body">
+                        <form action="{% url 'staff_add_street' %}" method="post" class="mb-3">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" name="street_name" class="form-control form-control-sm" placeholder="Нова вулиця" required>
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-success btn-sm">Додати</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <ul class="list-group list-group-flush">
+                            {% for street in cooperative.street_set.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>{{ street.name }}</span>
+                                <div class="btn-group">
+                                    <a href="{% url 'staff_edit_street' street.id %}" class="btn btn-link btn-sm text-warning p-0 mr-2" title="Редагувати">✏️</a>
+
+                                    <form action="{% url 'staff_delete_street' street.id %}" method="post" onsubmit="return confirm('Ви впевнені, що хочете видалити цю вулицю?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0" title="Видалити">×</button>
+                                    </form>
+                                </div>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-center text-muted small">Вулиць ще не додано</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-dark text-white font-weight-bold">
+                        ⌛ Заявки на реєстрацію
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Користувач</th>
+                                    <th>Вулиця</th>
+                                    <th>Ділянка</th>
+                                    <th>Лічильник</th>
+                                    <th>Дія</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for resident in residents %}
+                                <tr>
+                                    <form action="{% url 'approve_resident_staff' resident.id %}" method="post">
+                                        {% csrf_token %}
+                                        <td><strong>{{ resident.username }}</strong></td>
+                                        <td class="small">{{ resident.street }}</td>
+                                        <td>
+                                            <input type="text" name="plot_number" value="{{ resident.house_number }}" class="form-control form-control-sm" style="width: 70px;" required>
+                                        </td>
+                                        <td>
+                                            <select name="meter_type" class="form-control form-control-sm">
+                                                <option value="one_zone">1-зонний</option>
+                                                <option value="two_zone">2-зонний (Д/Н)</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <button type="submit" class="btn btn-success btn-sm font-weight-bold">Схвалити</button>
+                                        </td>
+                                    </form>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <p class="mb-0">Немає нових заявок на реєстрацію</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white font-weight-bold">⏳ Заявки на реєстрацію</div>
-                <table class="table mb-0">
-                    <thead><tr><th>Користувач</th><th>Вулиця</th><th>Ділянка</th><th>Тип</th><th>Дія</th></tr></thead>
-                    <tbody>
-                        {% for resident in residents %}
-                        <tr>
-                            <form action="{% url 'approve_resident_staff' resident.id %}" method="post">
-                                {% csrf_token %}
-                                <td>{{ resident.username }}</td>
-                                <td>{{ resident.street }}</td>
-                                <td><input type="text" name="plot_number" value="{{ resident.house_number }}" class="form-control form-control-sm" style="width: 70px;"></td>
-                                <td><select name="meter_type" class="form-control form-control-sm"><option value="one_zone">1-зон</option><option value="two_zone">Д/Н</option></select></td>
-                                <td><button type="submit" class="btn btn-success btn-sm">Схвалити</button></td>
-                            </form>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
-</div>
 {% endblock %}
