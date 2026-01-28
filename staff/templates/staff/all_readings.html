@@ -1,53 +1,81 @@
 {% extends 'base.html' %}
 
-
-
 {% block content %}
- {% include 'staff/navbar.html' %} <div class="container">
-        </div>
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>📊 Всі показники: {{ cooperative.title }}</h2>
-        <a href="{% url 'staff_dashboard' %}" class="btn btn-outline-secondary">Назад в панель</a>
-    </div>
+    {% include 'staff/navbar.html' %}
 
-    <div class="card shadow-sm border-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-dark text-white">
-                    <tr>
-                        <th>Дата</th>
-                        <th>Мешканець</th>
-                        <th>Адреса</th>
-                        <th>Показник (Т)</th>
-                        <th>До сплати</th>
-                        <th>Фото</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in readings %}
-                    <tr>
-                        <td>{{ r.date|date:"d.m.Y" }}</td>
-                        <td><strong>{{ r.submitted_by.username }}</strong></td>
-                        <td>{{ r.meter.membership.street.name }}, {{ r.meter.membership.plot_number }}</td>
-                        <td>{{ r.value_total }}</td>
-                        <td class="text-success font-weight-bold">
-                            {{ r.get_cost|floatformat:2 }} грн
-                        </td>
-                        <td>
-                            {% if r.photo %}
-                                <a href="{{ r.photo.url }}" target="_blank" class="btn btn-sm btn-info">📸</a>
-                            {% else %}
-                                <span class="text-muted small">немає</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center py-5 text-muted">Показники ще не подавалися</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>📊 Всі показники: {{ cooperative.title }}</h2>
+            <div class="text-right">
+                <span class="badge badge-secondary p-2">Всього записів: {{ readings.count }}</span>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-dark text-white">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Мешканець</th>
+                            <th>Адреса (Ділянка)</th>
+                            <th>Показник (Т)</th>
+                            <th>До сплати</th>
+                            <th>Фото</th>
+                            <th class="text-center">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in readings %}
+                        <tr>
+                            <td class="small">{{ r.date|date:"d.m.Y" }}</td>
+                            <td>
+                                <strong>{{ r.submitted_by.username }}</strong>
+                                {% if r.meter.is_two_zone %}
+                                    <span class="badge badge-pill badge-info" style="font-size: 0.7rem;">2-зонний</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ r.meter.membership.street.name }}</span>,
+                                <strong>{{ r.meter.membership.plot_number }}</strong>
+                            </td>
+                            <td>
+                                {% if r.meter.is_two_zone %}
+                                    <div class="small">
+                                        🌅 Д: {{ r.value_day }}<br>
+                                        🌃 Н: {{ r.value_night }}
+                                    </div>
+                                {% else %}
+                                    {{ r.value_total }}
+                                {% endif %}
+                            </td>
+                            <td class="font-weight-bold text-success">
+                                {{ r.get_cost|floatformat:2 }} грн
+                            </td>
+                            <td>
+                                {% if r.photo %}
+                                    <a href="{{ r.photo.url }}" target="_blank" class="btn btn-sm btn-light border" title="Переглянути фото">📸</a>
+                                {% else %}
+                                    <span class="text-muted small">немає</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'staff_edit_reading' r.id %}" class="btn btn-sm btn-outline-warning" title="Редагувати показник">
+                                    ✏️
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <h4 class="mt-3">Показники ще не подавалися</h4>
+                                <p>Як тільки мешканці почнуть звітувати, дані з'являться тут.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}

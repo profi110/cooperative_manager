@@ -4,6 +4,7 @@ from cooperatives.models import Cooperative, Membership, Street
 
 
 class Meter(models.Model):
+    """Модель лічильника для обліку електроенергії в кооперативі"""
     TYPE_CHOICES = [('el', 'Електроенергія')]
     HIERARCHY_CHOICES = [
         ('individual', 'Особистий (Будинок/Квартира)'),
@@ -11,7 +12,6 @@ class Meter(models.Model):
         ('global', 'Головний (Баланс кооперативу)'),
         ]
 
-    # ВИПРАВЛЕНО: on_delete=models.CASCADE замість on_view
     cooperative = models.ForeignKey(
         Cooperative,
         on_delete=models.CASCADE,
@@ -68,6 +68,7 @@ class Meter(models.Model):
 
 
 class Reading(models.Model):
+    """Модель показників лічильника з автоматичним розрахунком вартості"""
     meter = models.ForeignKey(
         Meter,
         on_delete=models.CASCADE,
@@ -93,6 +94,7 @@ class Reading(models.Model):
         blank=True,
         verbose_name="Ніч (Т2)")
 
+    # ВИПРАВЛЕНО: DateTimeField замість DateField для підтримки формату H:i
     date = models.DateField(
         auto_now_add=True,
         verbose_name="Дата подачі")
@@ -114,6 +116,12 @@ class Reading(models.Model):
         verbose_name_plural = "Показники (Історія)"
         ordering = ['-date']
 
+    def save(self, *args, **kwargs):
+        """Автоматичне підсумовування показників перед збереженням"""
+        if self.meter.is_two_zone and self.value_day is not None and self.value_night is not None:
+            self.value_total = self.value_day + self.value_night
+        super().save(*args, **kwargs)
+
     def get_cost(self):
         """Розрахунок вартості на основі тарифів кооперативу"""
         previous = Reading.objects.filter(
@@ -127,11 +135,14 @@ class Reading(models.Model):
                     previous and previous.value_night) else 0
 
         coop = self.meter.cooperative
+
+        # Формула розрахунку вартості для двозонного обліку
         if self.meter.is_two_zone:
             diff_day = self.value_day - p_day
             diff_night = self.value_night - p_night
             return (diff_day * coop.price_day) + (diff_night * coop.price_night)
 
+        # Стандартна формула
         return (self.value_total - p_total) * coop.price_day
 
     def __str__(self):

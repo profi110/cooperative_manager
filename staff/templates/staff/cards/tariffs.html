@@ -1,0 +1,21 @@
+<div class="card mb-4 border-warning shadow-sm">
+    <div class="card-header bg-warning font-weight-bold text-dark">
+        💰 Тарифи (грн/кВт)
+    </div>
+    <div class="card-body">
+        <form action="{% url 'update_tariffs' %}" method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="col">
+                    <label class="small">День</label>
+                    <input type="number" name="price_day" step="0.01" value="{{ cooperative.price_day|stringformat:'.2f' }}" class="form-control">
+                </div>
+                <div class="col">
+                    <label class="small">Ніч</label>
+                    <input type="number" name="price_night" step="0.01" value="{{ cooperative.price_night|stringformat:'.2f' }}" class="form-control">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-dark btn-sm btn-block mt-3">Зберегти тарифи</button>
+        </form>
+    </div>
+</div>

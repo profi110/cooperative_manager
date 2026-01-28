@@ -12,16 +12,24 @@ def home(request):
     return render(request, 'home.html')
 
 
+# users/views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout as auth_logout
+from cooperatives.models import Membership, Cooperative
+from meters.models import Meter
+from .forms import CustomUserCreationForm
+
+
 @login_required
 def dashboard(request):
-    """Особистий кабінет користувача"""
-    # 1. Перевіряємо, чи є користувач головою кооперативу
-    # Якщо так — перенаправляємо в адмін-панель управління (staff)
+    """Особистий кабінет користувача з перенаправленням за роллю"""
     membership = Membership.objects.filter(user=request.user).first()
-    if membership and membership.role == 'chairman':
+
+    # ЗМІНЕНО: додаємо перевірку на 'accountant'
+    if membership and membership.role in ['chairman', 'accountant']:
         return redirect('staff_dashboard')
 
-    # 2. Перевіряємо, чи підтверджено анкету мешканця головою
     if not request.user.is_approved:
         coop = Cooperative.objects.filter(id=request.user.coop_id).first()
         coop_name = coop.title if coop else "кооперативу"
@@ -29,22 +37,19 @@ def dashboard(request):
             request, 'registration/pending_approval.html',
             {'coop_name': coop_name})
 
-    # 3. Логіка для підтвердженого мешканця
-    # Знаходимо лічильник, прив'язаний до членства користувача
     meter = Meter.objects.filter(membership=membership).first()
-
-    # Отримуємо історію останніх 5 показників для відображення в кабінеті
     readings = []
     if meter:
-        # Використовуємо related_name='readings' з вашої моделі Reading
         readings = meter.readings.all()[:5]
 
-    # Передаємо лічильник та історію в шаблон users/dashboard.html
     return render(
         request, 'users/dashboard.html', {
             'meter': meter,
             'readings': readings
             })
+
+
+# ... решта функцій (home, register) залишаються без змін ...
 
 
 def register(request):

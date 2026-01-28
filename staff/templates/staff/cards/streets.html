@@ -1,0 +1,31 @@
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-primary text-white font-weight-bold">
+        📍 Вулиці
+    </div>
+    <div class="card-body">
+        <form action="{% url 'staff_add_street' %}" method="post" class="mb-3">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" name="street_name" class="form-control form-control-sm" placeholder="Нова вулиця" required>
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-success btn-sm">Додати</button>
+                </div>
+            </div>
+        </form>
+
+        <ul class="list-group list-group-flush">
+            {% for street in cooperative.street_set.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <span>{{ street.name }}</span>
+                <div class="btn-group">
+                    <a href="{% url 'staff_edit_street' street.id %}" class="btn btn-link btn-sm text-warning p-0 mr-2">✏️</a>
+                    <form action="{% url 'staff_delete_street' street.id %}" method="post" onsubmit="return confirm('Видалити вулицю?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">×</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

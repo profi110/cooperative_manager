@@ -14,4 +14,5 @@ urlpatterns = [
     path('manage/', views.manage_coop, name='staff_manage'),
     path('manage/edit/<int:membership_id>/', views.edit_member, name='staff_edit_member'),
     path('manage/delete/<int:membership_id>/', views.delete_member, name='staff_delete_member'),
+    path('readings/edit/<int:reading_id>/', views.edit_reading, name='staff_edit_reading'),
 ]

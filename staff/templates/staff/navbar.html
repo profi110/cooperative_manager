@@ -13,11 +13,25 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'staff_voting' %}">🗳️ Голосування</a>
                 </li>
+
+                {% if user_role == 'chairman' %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'staff_manage' %}">⚙️ Управління</a>
                 </li>
+                {% endif %}
             </ul>
-            <span class="navbar-text mr-3">Голова: {{ user.username }}</span>
+
+            <span class="navbar-text mr-3">
+                {% if user_role == 'chairman' %}
+                    👑 Голова:
+                {% elif user_role == 'accountant' %}
+                    💼 Бухгалтер:
+                {% else %}
+                    👤 Користувач:
+                {% endif %}
+                <strong>{{ user.username }}</strong>
+            </span>
+
             <form action="{% url 'logout' %}" method="post" class="form-inline my-2 my-lg-0">
                 {% csrf_token %}
                 <button class="btn btn-outline-danger btn-sm" type="submit">Вихід</button>
