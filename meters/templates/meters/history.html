@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📜 Історія моїх показників</h2>
+        <a href="{% url 'user_dashboard' %}" class="btn btn-outline-secondary">Повернутися</a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Період (Місяць)</th>
+                        <th>Дата подачі</th>
+                        <th>Показники (кВт)</th>
+                        <th>Нараховано</th>
+                        <th class="text-right">Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in history %}
+                    <tr>
+                        <td class="font-weight-bold">{{ r.date|date:"F Y" }}</td>
+                        <td class="small text-muted">{{ r.date|date:"d.m.Y" }}</td>
+                        <td>
+                            {% if r.meter.is_two_zone %}
+                                <div class="small">
+                                    <span class="text-warning">🌅 День:</span> {{ r.value_day }}<br>
+                                    <span class="text-primary">🌃 Ніч:</span> {{ r.value_night }}
+                                </div>
+                            {% else %}
+                                {{ r.value_total }}
+                            {% endif %}
+                        </td>
+                        <td class="font-weight-bold text-success">
+                            {{ r.get_cost|floatformat:2 }} грн
+                        </td>
+                        <td class="text-right">
+                            <span class="badge badge-pill badge-success">Прийнято</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <h5>Ви ще не подавали показників</h5>
+                            <p>Ваша історія з'явиться тут після першого звіту.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

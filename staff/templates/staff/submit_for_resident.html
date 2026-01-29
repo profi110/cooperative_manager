@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include 'staff/navbar.html' %}
+
+<div class="container mt-4">
+    <div class="card shadow mx-auto" style="max-width: 600px;">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">➕ Внести показники за мешканця</h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-secondary">
+                <strong>Ділянка:</strong> {{ meter.membership.plot_number }}<br>
+                <strong>Власник:</strong> {{ meter.membership.user.username }}<br>
+                <strong>Лічильник:</strong> №{{ meter.number }}
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {% if meter.is_two_zone %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>T1 (День)</label>
+                            <input type="number" step="0.01" name="value_day" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>T2 (Ніч)</label>
+                            <input type="number" step="0.01" name="value_night" class="form-control" required>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="form-group mb-3">
+                        <label>Загальний показник</label>
+                        <input type="number" step="0.01" name="value_total" class="form-control" required>
+                    </div>
+                {% endif %}
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-block">Зберегти показники</button>
+                    <a href="{% url 'staff_manage' %}" class="btn btn-link btn-block text-muted">Скасувати</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

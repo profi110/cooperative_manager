@@ -4,36 +4,86 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <title>Реєстрація</title>
+    <title>Реєстрація мешканця</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
-<body>
-    <div class="container" style="max-width: 500px; margin-top: 50px;">
-        <div class="card shadow" style="padding: 30px; border-radius: 15px; background: white;">
-            <h2 class="text-center">📝 Реєстрація</h2>
+<body style="background-color: #f4f7f6;">
+    <div class="container" style="max-width: 700px; margin-top: 50px; margin-bottom: 50px;">
+        <div class="card shadow border-0" style="padding: 30px; border-radius: 20px; background: white;">
+            <h2 class="text-center font-weight-bold" style="color: #2c3e50;">📝 Реєстрація</h2>
+            <p class="text-center text-muted small">Будь ласка, заповніть дані для доступу до системи</p>
             <hr>
 
             <form method="post" id="registrationForm">
                 {% csrf_token %}
 
-                {% for field in form %}
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label><strong>{{ field.label }}</strong></label>
-                        {{ field }}
-                        {% for error in field.errors %}
-                            <p style="color: red; font-size: 0.8rem;">{{ error }}</p>
-                        {% endfor %}
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label><strong>{{ form.last_name.label }}</strong></label>
+                        {{ form.last_name }}
+                        <div class="text-danger small">{{ form.last_name.errors }}</div>
                     </div>
-                {% endfor %}
-
-                <div id="coop-info" style="margin: 10px 0; padding: 10px; border-radius: 5px; display: none;">
-                    <span id="coop-message"></span>
+                    <div class="col-md-4 form-group">
+                        <label><strong>{{ form.first_name.label }}</strong></label>
+                        {{ form.first_name }}
+                        <div class="text-danger small">{{ form.first_name.errors }}</div>
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label><strong>{{ form.middle_name.label }}</strong></label>
+                        {{ form.middle_name }}
+                        <div class="text-danger small">{{ form.middle_name.errors }}</div>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-success" style="width: 100%; padding: 10px; background-color: #2ecc71; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                    Відправити заявку
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label><strong>{{ form.phone_number.label }}</strong></label>
+                        {{ form.phone_number }}
+                        <div class="text-danger small">{{ form.phone_number.errors }}</div>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label><strong>Логін (username)</strong></label>
+                        {{ form.username }}
+                        <div class="text-danger small">{{ form.username.errors }}</div>
+                    </div>
+                </div>
+
+                <div class="p-3 mb-3" style="background-color: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef;">
+                    <div class="form-group">
+                        <label><strong>{{ form.coop_id.label }}</strong></label>
+                        {{ form.coop_id }}
+                    </div>
+                    <div id="coop-info" style="margin: 10px 0; padding: 10px; border-radius: 5px; display: none;">
+                        <span id="coop-message"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8 form-group">
+                        <label><strong>{{ form.street.label }}</strong></label>
+                        {{ form.street }}
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label><strong>{{ form.house_number.label }}</strong></label>
+                        {{ form.house_number }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Пароль</strong></label>
+                    {{ form.password1 }}
+                </div>
+                <div class="form-group">
+                    <label><strong>Підтвердження пароля</strong></label>
+                    {{ form.password2 }}
+                </div>
+
+                <button type="submit" class="btn btn-success mt-3" style="width: 100%; padding: 12px; background-color: #2ecc71; border: none; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s;">
+                    🚀 Відправити заявку
                 </button>
             </form>
         </div>
+        <p class="text-center mt-3">Вже маєте акаунт? <a href="{% url 'login' %}" style="color: #2ecc71; font-weight: bold;">Увійти</a></p>
     </div>
 
     <script>
@@ -45,23 +95,16 @@
 
             coopInput.addEventListener('input', function() {
                 const coopId = this.value;
-
                 if (coopId.length > 0) {
-                    // Використовуємо fetch замість AJAX
                     fetch(`{% url 'check_coop_id' %}?coop_id=${coopId}`)
-                        .then(response => {
-                            if (!response.ok) throw new Error('Network response was not ok');
-                            return response.json();
-                        })
+                        .then(response => response.json())
                         .then(data => {
                             if (data.exists) {
-                                // Налаштування при успішному пошуку
                                 infoBox.style.display = 'block';
                                 infoBox.style.backgroundColor = '#d4edda';
                                 infoBox.style.color = '#155724';
                                 messageSpan.textContent = "✅ Кооператив знайдено: " + data.name;
 
-                                // Очищення та заповнення списку вулиць
                                 streetSelect.innerHTML = '<option value="">-- Оберіть вулицю --</option>';
                                 data.streets.forEach(street => {
                                     const option = document.createElement('option');
@@ -69,23 +112,16 @@
                                     option.textContent = street;
                                     streetSelect.appendChild(option);
                                 });
-                                streetSelect.parentElement.style.display = 'block';
                             } else {
-                                // Налаштування, якщо не знайдено
                                 infoBox.style.display = 'block';
                                 infoBox.style.backgroundColor = '#f8d7da';
                                 infoBox.style.color = '#721c24';
-                                messageSpan.textContent = "❌ Кооператив з таким ID не існує";
-                                streetSelect.innerHTML = '';
-                                streetSelect.parentElement.style.display = 'none';
+                                messageSpan.textContent = "❌ Кооператив не існує";
+                                streetSelect.innerHTML = '<option value="">---------</option>';
                             }
-                        })
-                        .catch(error => {
-                            console.error('Помилка Fetch:', error);
                         });
                 } else {
                     infoBox.style.display = 'none';
-                    streetSelect.parentElement.style.display = 'none';
                 }
             });
         });
