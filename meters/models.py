@@ -94,7 +94,6 @@ class Reading(models.Model):
         blank=True,
         verbose_name="Ніч (Т2)")
 
-    # ВИПРАВЛЕНО: DateTimeField замість DateField для підтримки формату H:i
     date = models.DateField(
         auto_now_add=True,
         verbose_name="Дата подачі")
@@ -136,13 +135,11 @@ class Reading(models.Model):
 
         coop = self.meter.cooperative
 
-        # Формула розрахунку вартості для двозонного обліку
         if self.meter.is_two_zone:
             diff_day = self.value_day - p_day
             diff_night = self.value_night - p_night
             return (diff_day * coop.price_day) + (diff_night * coop.price_night)
 
-        # Стандартна формула
         return (self.value_total - p_total) * coop.price_day
 
     def __str__(self):

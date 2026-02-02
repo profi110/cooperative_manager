@@ -1,9 +1,8 @@
-# users/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from cooperatives.models import Membership, Cooperative
-from meters.models import Meter  # Додано для роботи з лічильниками
+from meters.models import Meter
 from .forms import CustomUserCreationForm
 
 
@@ -12,7 +11,6 @@ def home(request):
     return render(request, 'home.html')
 
 
-# users/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
@@ -26,7 +24,6 @@ def dashboard(request):
     """Особистий кабінет користувача з перенаправленням за роллю"""
     membership = Membership.objects.filter(user=request.user).first()
 
-    # ЗМІНЕНО: додаємо перевірку на 'accountant'
     if membership and membership.role in ['chairman', 'accountant']:
         return redirect('staff_dashboard')
 
@@ -49,7 +46,6 @@ def dashboard(request):
             })
 
 
-# ... решта функцій (home, register) залишаються без змін ...
 
 
 def register(request):
@@ -58,15 +54,12 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            # Нові користувачі завжди потребують підтвердження головою
             user.is_approved = False
             user.save()
 
-            # Знаходимо назву кооперативу для сторінки очікування
             coop = Cooperative.objects.filter(id=user.coop_id).first()
             coop_name = coop.title if coop else "кооперативу"
 
-            # Виходимо із системи, щоб мешканець не зайшов у кабінет до схвалення
             auth_logout(request)
             return render(
                 request, 'registration/pending_approval.html',

@@ -8,7 +8,6 @@ from cooperatives.models import Membership, Cooperative, Street
 from meters.models import Meter, Reading
 
 
-# --- ПАНЕЛЬ УПРАВЛІННЯ ---
 
 @login_required
 @staff_required
@@ -18,7 +17,6 @@ def staff_dashboard(request):
         user=request.user, role__in=['chairman', 'accountant'])
     cooperative = membership.cooperative
 
-    # Тільки Голова бачить заявки на реєстрацію
     residents = []
     if membership.role == 'chairman':
         residents = CustomUser.objects.filter(
@@ -32,7 +30,6 @@ def staff_dashboard(request):
             })
 
 
-# --- РОБОТА З ПОКАЗНИКАМИ ---
 
 @login_required
 @staff_required
@@ -60,7 +57,6 @@ def edit_reading(request, reading_id):
     membership = Membership.objects.get(
         user=request.user, role__in=['chairman', 'accountant'])
 
-    # Знаходимо попередній запис для цього лічильника
     previous = Reading.objects.filter(
         meter=reading.meter,
         date__lt=reading.date
@@ -72,7 +68,6 @@ def edit_reading(request, reading_id):
                 val_day = float(request.POST.get('value_day', 0))
                 val_night = float(request.POST.get('value_night', 0))
 
-                # Валідація: не можна вводити цифри, менші за попередні
                 if previous:
                     if val_day < float(
                             previous.value_day or 0) or val_night < float(
@@ -111,7 +106,6 @@ def edit_reading(request, reading_id):
         {'reading': reading, 'user_role': membership.role})
 
 
-# --- УПРАВЛІННЯ МЕШКАНЦЯМИ (ТІЛЬКИ ГОЛОВА) ---
 
 @login_required
 @chairman_required
@@ -135,7 +129,6 @@ def approve_resident(request, user_id):
                 }
             )
 
-        # Генерація номера: цифри з назви вулиці + номер ділянки
         street_digits = "".join(
             re.findall(r'\d+', street_obj.name)) if street_obj else "0"
         serial = f"{street_digits}{plot_val}"
@@ -183,7 +176,7 @@ def edit_member(request, membership_id):
 
         membership.plot_number = request.POST.get('plot_number')
         membership.role = request.POST.get(
-            'role')  # Тут можна призначити Бухгалтера
+            'role')
 
         street_id = request.POST.get('street')
         if street_id:
@@ -214,7 +207,6 @@ def delete_member(request, membership_id):
     return redirect('staff_manage')
 
 
-# --- УПРАВЛІННЯ СТРУКТУРОЮ ТА ТАРИФАМИ ---
 
 @login_required
 @chairman_required
@@ -263,7 +255,6 @@ def delete_street(request, street_id):
     return redirect('staff_dashboard')
 
 
-# --- ГОЛОСУВАННЯ ---
 
 @login_required
 @staff_required

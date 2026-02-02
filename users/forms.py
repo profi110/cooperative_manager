@@ -5,7 +5,6 @@ from cooperatives.models import Cooperative
 
 
 class CustomUserCreationForm(UserCreationForm):
-    # Персональні дані
     last_name = forms.CharField(
         label="Прізвище",
         widget=forms.TextInput(attrs={'placeholder': 'Наприклад: Шевченко'})
@@ -24,7 +23,6 @@ class CustomUserCreationForm(UserCreationForm):
         widget=forms.TextInput(attrs={'placeholder': '+380...'})
         )
 
-    # Дані кооперативу та адреса
     coop_id = forms.CharField(
         label="🏢 ID Кооперативу",
         widget=forms.TextInput(
@@ -42,7 +40,6 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        # Додаємо всі нові поля до списку
         fields = (
             'username', 'email', 'last_name', 'first_name',
             'middle_name', 'phone_number', 'coop_id', 'street', 'house_number'
@@ -51,13 +48,11 @@ class CustomUserCreationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Автоматично додаємо клас form-control до всіх віджетів
         for field in self.fields.values():
             existing_class = field.widget.attrs.get('class', '')
             field.widget.attrs[
                 'class'] = f"{existing_class} form-control".strip()
 
-        # Ваша логіка фільтрації вулиць
         if 'coop_id' in self.data:
             try:
                 coop_id = self.data.get('coop_id')

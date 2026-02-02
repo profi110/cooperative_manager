@@ -1,5 +1,4 @@
-# meters/urls.py
-from django.urls import path  # ЦЬОГО РЯДКА НЕ ВИСТАЧАЛО
+from django.urls import path
 from . import views
 
 urlpatterns = [

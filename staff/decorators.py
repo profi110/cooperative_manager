@@ -12,17 +12,14 @@ def chairman_required(view_func):
 
         membership = Membership.objects.filter(user=request.user).first()
 
-        # Якщо це голова — пускаємо
         if membership and membership.role == 'chairman':
             return view_func(request, *args, **kwargs)
 
-        # Якщо це бухгалтер — повертаємо на дашборд з повідомленням
         if membership and membership.role == 'accountant':
             messages.warning(
                 request, "У вас немає прав для доступу до цього розділу.")
             return redirect('staff_dashboard')
 
-        # Решту (звичайних мешканців) — на головну кабінету
         return redirect('user_dashboard')
 
     return _wrapped_view
@@ -43,7 +40,6 @@ def staff_required(view_func):
         if is_staff:
             return view_func(request, *args, **kwargs)
 
-        # Якщо звичайний мешканець намагається зайти — в його кабінет
         return redirect('user_dashboard')
 
     return _wrapped_view

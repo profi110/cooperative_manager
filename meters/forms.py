@@ -20,7 +20,6 @@ class ReadingForm(forms.ModelForm):
         self.is_two_zone = kwargs.pop('is_two_zone', False)
         super().__init__(*args, **kwargs)
 
-        # Робимо фото необов'язковим
         self.fields['photo'].required = False
 
         if not self.is_two_zone:

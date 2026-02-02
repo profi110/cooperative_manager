@@ -5,6 +5,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),
     path('coops/', include('cooperatives.urls')),
-    path('staff/', include('staff.urls')), # Новий рядок
+    path('staff/', include('staff.urls')),
     path('meters/', include('meters.urls')),
 ]
