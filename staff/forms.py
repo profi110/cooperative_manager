@@ -1,6 +1,6 @@
 from django import forms
 from users.models import CustomUser
-from cooperatives.models import Membership
+from cooperatives.models import Membership, Street
 
 class UserUpdateForm(forms.ModelForm):
     """Форма для персональних даних користувача"""
@@ -24,3 +24,16 @@ class MembershipUpdateForm(forms.ModelForm):
             'plot_number': forms.TextInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-control'}),
         }
+
+class StreetForm(forms.ModelForm):
+    """Форма для добавления новой улицы"""
+    class Meta:
+        model = Street
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Нова вулиця'
+            })
+        }
+

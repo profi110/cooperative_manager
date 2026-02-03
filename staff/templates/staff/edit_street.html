@@ -1,16 +1,21 @@
 {% extends 'base.html' %}
 {% block content %}
-    {% include 'staff/navbar.html' %}
     <div class="container mt-5">
         <div class="card shadow-sm mx-auto" style="max-width: 400px;">
             <div class="card-header bg-warning font-weight-bold">✏️ Перейменувати вулицю</div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">{{ form.errors }}</div>
+                    {% endif %}
+
                     <div class="form-group">
-                        <label class="small">Поточна назва: <strong>{{ street.name }}</strong></label>
-                        <input type="text" name="street_name" value="{{ street.name }}" class="form-control" required>
+                        <label class="small text-muted">Поточна назва: <strong>{{ street.name }}</strong></label>
+                        {{ form.name }}
                     </div>
+
                     <button type="submit" class="btn btn-primary btn-block">Зберегти назву</button>
                     <a href="{% url 'staff_dashboard' %}" class="btn btn-link btn-block">Скасувати</a>
                 </form>

@@ -6,7 +6,7 @@ from .decorators import chairman_required, staff_required
 from users.models import CustomUser
 from cooperatives.models import Membership, Cooperative, Street
 from meters.models import Meter, Reading
-from .forms import UserUpdateForm, MembershipUpdateForm
+from .forms import *
 
 
 
@@ -14,22 +14,40 @@ from .forms import UserUpdateForm, MembershipUpdateForm
 @staff_required
 def staff_dashboard(request):
     """Головна панель: Голова бачить все, Бухгалтер — лише навігацію"""
+    # Отримуємо членство та кооператив
     membership = Membership.objects.get(
         user=request.user, role__in=['chairman', 'accountant'])
     cooperative = membership.cooperative
+
+    # 1. ДОДАЄМО: Отримуємо список вулиць для цього кооперативу
+    streets = Street.objects.filter(cooperative=cooperative)
+
+    # 2. ДОДАЄМО: Створюємо порожню форму для поля "Нова вулиця"
+    form = StreetForm()
 
     residents = []
     if membership.role == 'chairman':
         residents = CustomUser.objects.filter(
             coop_id=cooperative.id, is_approved=False)
 
+    # 3. ДОДАЄМО: Обробка створення вулиці прямо з дашборду
+    if request.method == 'POST':
+        form = StreetForm(request.POST)
+        if form.is_valid():
+            new_street = form.save(commit=False)
+            new_street.cooperative = cooperative
+            new_street.save()
+            messages.success(request, f"Вулицю {new_street.name} додано.")
+            return redirect('staff_dashboard')
+
     return render(
         request, 'staff/dashboard.html', {
             'cooperative': cooperative,
             'residents': residents,
-            'user_role': membership.role
-            })
-
+            'user_role': membership.role,
+            'streets': streets,  # ПЕРЕДАЄМО СПИСОК
+            'form': form,        # ПЕРЕДАЄМО ФОРМУ
+        })
 
 
 @login_required
@@ -180,7 +198,7 @@ def edit_member(request, membership_id):
                 request,
                 f"Дані користувача {membership.user.username} оновлено!")
             return redirect(
-                'staff_manage')  # Переконайтеся, що цей name існує в urls.py
+                'staff_manage')
     else:
         u_form = UserUpdateForm(instance=membership.user)
         m_form = MembershipUpdateForm(instance=membership)
@@ -220,38 +238,73 @@ def update_tariffs(request):
 
 
 @login_required
-@chairman_required
-def add_street(request):
-    if request.method == 'POST':
-        name = request.POST.get('street_name')
-        coop = Membership.objects.get(
-            user=request.user, role='chairman').cooperative
-        if name:
-            Street.objects.create(cooperative=coop, name=name)
-            messages.success(request, f"Вулицю {name} додано.")
-    return redirect('staff_dashboard')
-
-
+@staff_required
 @login_required
-@chairman_required
-def edit_street(request, street_id):
-    street = get_object_or_404(Street, id=street_id)
+@staff_required
+def manage_streets(request):
+    """Додавання нової вулиці (POST) та перегляд (GET)"""
+    membership = Membership.objects.filter(user=request.user).first()
+    coop = membership.cooperative if membership else None
+    streets = Street.objects.filter(
+        cooperative=coop) if coop else Street.objects.none()
+
     if request.method == 'POST':
-        street.name = request.POST.get('street_name')
-        street.save()
-        return redirect('staff_dashboard')
+        form = StreetForm(request.POST)
+        if form.is_valid():
+            street = form.save(commit=False)
+            street.cooperative = coop
+            street.save()
+            messages.success(request, f"Вулицю {street.name} успішно додано.")
+            # Повертаємо на дашборд замість окремої сторінки
+            return redirect('staff_dashboard')
+    else:
+        form = StreetForm()
+
+    # Якщо зайти на цю сторінку просто через GET, вона все ще працюватиме
     return render(
-        request, 'staff/edit_street.html',
-        {'street': street, 'user_role': 'chairman'})
+        request, 'staff/cards/streets.html', {
+            'streets': streets,
+            'form': form
+            })
 
 
 @login_required
-@chairman_required
-def delete_street(request, street_id):
-    if request.method == 'POST':
-        Street.objects.get(id=street_id).delete()
-    return redirect('staff_dashboard')
+@staff_required
+def edit_street(request, street_id):
+    """Редагування назви існуючої вулиці"""
+    street = get_object_or_404(Street, id=street_id)
 
+    if request.method == 'POST':
+        # Передаємо instance=street, щоб оновити існуючий запис
+        form = StreetForm(request.POST, instance=street)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Назву вулиці змінено на {street.name}.")
+            # Повертаємо на дашборд
+            return redirect('staff_dashboard')
+    else:
+        form = StreetForm(instance=street)
+
+    return render(
+        request, 'staff/edit_street.html', {
+            'form': form,
+            'street': street
+            })
+
+
+@login_required
+@staff_required
+def delete_street(request, street_id):
+    """Видалення вулиці"""
+    street = get_object_or_404(Street, id=street_id)
+
+    if request.method == 'POST':
+        name = street.name
+        street.delete()
+        messages.warning(request, f"Вулицю {name} видалено.")
+
+    # Повертаємо на дашборд
+    return redirect('staff_dashboard')
 
 
 @login_required
