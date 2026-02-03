@@ -39,11 +39,13 @@
                     <div class="col-md-6 form-group">
                         <label><strong>{{ form.phone_number.label }}</strong></label>
                         {{ form.phone_number }}
+                        <span id="phone-error" class="text-danger small d-block"></span>
                         <div class="text-danger small">{{ form.phone_number.errors }}</div>
                     </div>
                     <div class="col-md-6 form-group">
                         <label><strong>Логін (username)</strong></label>
                         {{ form.username }}
+                        <span id="username-error" class="text-danger small d-block"></span>
                         <div class="text-danger small">{{ form.username.errors }}</div>
                     </div>
                 </div>
@@ -78,7 +80,7 @@
                     {{ form.password2 }}
                 </div>
 
-                <button type="submit" class="btn btn-success mt-3" style="width: 100%; padding: 12px; background-color: #2ecc71; border: none; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s;">
+                <button type="submit" id="submitBtn" class="btn btn-success mt-3" style="width: 100%; padding: 12px; background-color: #2ecc71; border: none; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s;">
                     🚀 Відправити заявку
                 </button>
             </form>
@@ -88,11 +90,30 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Елементи форми
             const coopInput = document.getElementById('id_coop_id');
             const streetSelect = document.getElementById('id_street');
             const infoBox = document.getElementById('coop-info');
             const messageSpan = document.getElementById('coop-message');
+            const usernameInput = document.getElementById('id_username');
+            const phoneInput = document.getElementById('id_phone_number');
+            const usernameError = document.getElementById('username-error');
+            const phoneError = document.getElementById('phone-error');
+            const submitBtn = document.getElementById('submitBtn');
 
+            // Стан валідації
+            let validation = {
+                coop: false,
+                username: false,
+                phone: false
+            };
+
+            // Функція перевірки загального стану форми
+            function toggleSubmit() {
+                submitBtn.disabled = !(validation.coop && validation.username && validation.phone);
+            }
+
+            // 1. ПЕРЕВІРКА КООПЕРАТИВУ (через fetch)
             coopInput.addEventListener('input', function() {
                 const coopId = this.value;
                 if (coopId.length > 0) {
@@ -105,6 +126,7 @@
                                 infoBox.style.color = '#155724';
                                 messageSpan.textContent = "✅ Кооператив знайдено: " + data.name;
 
+                                // Оновлення вулиць
                                 streetSelect.innerHTML = '<option value="">-- Оберіть вулицю --</option>';
                                 data.streets.forEach(street => {
                                     const option = document.createElement('option');
@@ -112,18 +134,57 @@
                                     option.textContent = street;
                                     streetSelect.appendChild(option);
                                 });
+                                validation.coop = true;
                             } else {
                                 infoBox.style.display = 'block';
                                 infoBox.style.backgroundColor = '#f8d7da';
                                 infoBox.style.color = '#721c24';
                                 messageSpan.textContent = "❌ Кооператив не існує";
                                 streetSelect.innerHTML = '<option value="">---------</option>';
+                                validation.coop = false;
                             }
+                            toggleSubmit();
                         });
                 } else {
                     infoBox.style.display = 'none';
+                    validation.coop = false;
+                    toggleSubmit();
                 }
             });
+
+            // 2. ПЕРЕВІРКА ДУБЛІКАТІВ (Логін та Телефон)
+            function checkDuplicate(inputElement, errorElement, paramName, validationKey) {
+                const value = inputElement.value;
+                if (value.length < 3) {
+                    errorElement.textContent = "";
+                    inputElement.style.borderColor = "";
+                    validation[validationKey] = false;
+                    toggleSubmit();
+                    return;
+                }
+
+                fetch(`{% url 'api_check_duplicates' %}?${paramName}=${encodeURIComponent(value)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.is_taken) {
+                            inputElement.style.borderColor = "red";
+                            errorElement.textContent = "❌ Вже використовується";
+                            validation[validationKey] = false;
+                        } else {
+                            inputElement.style.borderColor = "#2ecc71";
+                            errorElement.textContent = "";
+                            validation[validationKey] = true;
+                        }
+                        toggleSubmit();
+                    })
+                    .catch(err => console.error('Помилка API:', err));
+            }
+
+            usernameInput.addEventListener('input', () =>
+                checkDuplicate(usernameInput, usernameError, 'username', 'username'));
+
+            phoneInput.addEventListener('input', () =>
+                checkDuplicate(phoneInput, phoneError, 'phone', 'phone'));
         });
     </script>
 </body>

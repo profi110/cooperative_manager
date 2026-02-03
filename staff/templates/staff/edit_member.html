@@ -2,38 +2,53 @@
 {% block content %}
     {% include 'staff/navbar.html' %}
     <div class="container mt-4">
-        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
-            <div class="card-header bg-warning font-weight-bold">📝 Редагування користувача: {{ membership.user.username }}</div>
+        <div class="card shadow-sm mx-auto" style="max-width: 600px; border-radius: 15px;">
+            <div class="card-header bg-warning font-weight-bold">📝 Редагування: {{ membership.user.username }}</div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <label>Логін (Username)</label>
-                        <input type="text" name="username" value="{{ membership.user.username }}" class="form-control" required>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Прізвище</label>
+                            {{ u_form.last_name }}
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Ім'я</label>
+                            {{ u_form.first_name }}
+                        </div>
                     </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Телефон</label>
+                            {{ u_form.phone_number }}
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Логін</label>
+                            {{ u_form.username }}
+                        </div>
+                    </div>
+
+                    <hr>
+
                     <div class="form-group">
                         <label>Вулиця</label>
-                        <select name="street" class="form-control">
-                            {% for street in streets %}
-                                <option value="{{ street.id }}" {% if membership.street.id == street.id %}selected{% endif %}>{{ street.name }}</option>
-                            {% endfor %}
-                        </select>
+                        {{ m_form.street }}
                     </div>
+
                     <div class="form-group">
                         <label>Номер ділянки</label>
-                        <input type="text" name="plot_number" value="{{ membership.plot_number }}" class="form-control" required>
+                        {{ m_form.plot_number }}
                     </div>
+
                     <div class="form-group">
                         <label>Роль у системі</label>
-                        <select name="role" class="form-control">
-                            <option value="member" {% if membership.role == 'member' %}selected{% endif %}>Учасник</option>
-                            <option value="accountant" {% if membership.role == 'accountant' %}selected{% endif %}>Бухгалтер</option>
-                            <option value="vice_chairman" {% if membership.role == 'vice_chairman' %}selected{% endif %}>Зам голови</option>
-                        </select>
+                        {{ m_form.role }}
                     </div>
-                    <hr>
-                    <button type="submit" class="btn btn-success btn-block">Зберегти зміни</button>
-                    <a href="{% url 'staff_manage' %}" class="btn btn-link btn-block">Скасувати</a>
+
+                    <button type="submit" class="btn btn-success btn-block mt-4 py-2">Зберегти зміни</button>
+                    <a href="{% url 'staff_manage' %}" class="btn btn-link btn-block text-muted">Скасувати</a>
                 </form>
             </div>
         </div>

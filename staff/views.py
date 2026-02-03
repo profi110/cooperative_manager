@@ -6,6 +6,7 @@ from .decorators import chairman_required, staff_required
 from users.models import CustomUser
 from cooperatives.models import Membership, Cooperative, Street
 from meters.models import Meter, Reading
+from .forms import UserUpdateForm, MembershipUpdateForm
 
 
 
@@ -163,35 +164,32 @@ def manage_coop(request):
 
 
 @login_required
-@chairman_required
+@staff_required
 def edit_member(request, membership_id):
-    """Редагування даних мешканця або зміна ролі (наприклад, на Бухгалтера)"""
+    # Отримуємо запис членства за ID
     membership = get_object_or_404(Membership, id=membership_id)
-    ch_mem = Membership.objects.get(user=request.user, role='chairman')
 
     if request.method == 'POST':
-        user = membership.user
-        user.username = request.POST.get('username')
-        user.save()
+        u_form = UserUpdateForm(request.POST, instance=membership.user)
+        m_form = MembershipUpdateForm(request.POST, instance=membership)
 
-        membership.plot_number = request.POST.get('plot_number')
-        membership.role = request.POST.get(
-            'role')
+        if u_form.is_valid() and m_form.is_valid():
+            u_form.save()
+            m_form.save()
+            messages.success(
+                request,
+                f"Дані користувача {membership.user.username} оновлено!")
+            return redirect(
+                'staff_manage')  # Переконайтеся, що цей name існує в urls.py
+    else:
+        u_form = UserUpdateForm(instance=membership.user)
+        m_form = MembershipUpdateForm(instance=membership)
 
-        street_id = request.POST.get('street')
-        if street_id:
-            membership.street = Street.objects.get(id=street_id)
-
-        membership.save()
-        messages.success(request, "Дані мешканця оновлено.")
-        return redirect('staff_manage')
-
-    streets = Street.objects.filter(cooperative=ch_mem.cooperative)
     return render(
         request, 'staff/edit_member.html', {
-            'membership': membership,
-            'streets': streets,
-            'user_role': ch_mem.role
+            'u_form': u_form,
+            'm_form': m_form,
+            'membership': membership
             })
 
 
