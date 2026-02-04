@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="card shadow-sm mx-auto" style="max-width: 400px;">
+            <div class="card-header bg-primary text-white">
+                🔢 Введіть номер лічильника
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label>Номер лічильника:</label>
+                        <input type="text" name="meter_number" class="form-control form-control-lg" placeholder="Наприклад: 00154" autofocus required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block w-100">Знайти і додати показник</button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <a href="{% url 'staff_readings' %}" class="text-muted small">Скасувати</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

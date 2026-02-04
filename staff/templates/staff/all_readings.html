@@ -6,8 +6,11 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>📊 Всі показники: {{ cooperative.title }}</h2>
-            <div class="text-right">
-                <span class="badge badge-secondary p-2">Всього записів: {{ readings.count }}</span>
+            <div class="d-flex gap-2">
+                <a href="{% url 'find_meter_by_number' %}" class="btn btn-primary shadow-sm">
+                    ➕ Додати новий показник
+                </a>
+                <span class="badge badge-secondary p-2 ml-2">Всього записів: {{ readings.count }}</span>
             </div>
         </div>
 
@@ -29,12 +32,23 @@
                         {% for r in readings %}
                         <tr>
                             <td class="small">{{ r.date|date:"d.m.Y" }}</td>
+
                             <td>
-                                <strong>{{ r.submitted_by.username }}</strong>
+                                <strong>{{ r.meter.membership.user.get_full_name|default:r.meter.membership.user.username }}</strong>
+
+                                {% if r.submitted_by != r.meter.membership.user %}
+                                    <div style="font-size: 0.75em; color: #6c757d;">
+                                        (Подав: {{ r.submitted_by.username }})
+                                    </div>
+                                {% endif %}
+
                                 {% if r.meter.is_two_zone %}
-                                    <span class="badge badge-pill badge-info" style="font-size: 0.7rem;">2-зонний</span>
+                                    <div class="mt-1">
+                                        <span class="badge badge-pill badge-info" style="font-size: 0.65rem;">2-зонний</span>
+                                    </div>
                                 {% endif %}
                             </td>
+
                             <td>
                                 <span class="text-muted">{{ r.meter.membership.street.name }}</span>,
                                 <strong>{{ r.meter.membership.plot_number }}</strong>
@@ -60,9 +74,14 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <a href="{% url 'staff_edit_reading' r.id %}" class="btn btn-sm btn-outline-warning" title="Редагувати показник">
-                                    ✏️
-                                </a>
+                                <div class="btn-group">
+                                    <a href="{% url 'add_reading' r.meter.membership.id %}" class="btn btn-sm btn-outline-success" title="Додати новий показник для цього мешканця">
+                                        ➕
+                                    </a>
+                                    <a href="{% url 'staff_edit_reading' r.id %}" class="btn btn-sm btn-outline-warning" title="Редагувати цей показник">
+                                        ✏️
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}

@@ -13,5 +13,7 @@ urlpatterns = [
     path('manage/', views.manage_coop, name='staff_manage'),
     path('manage/edit/<int:membership_id>/', views.edit_member, name='staff_edit_member'),
     path('manage/delete/<int:membership_id>/', views.delete_member, name='staff_delete_member'),
+    path('readings/add/<int:membership_id>/', views.add_reading, name='add_reading'),
     path('readings/edit/<int:reading_id>/', views.edit_reading, name='staff_edit_reading'),
+    path('readings/find/', views.find_meter_by_number, name='find_meter_by_number'),
 ]

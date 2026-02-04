@@ -9,7 +9,6 @@ from meters.models import Meter, Reading
 from .forms import *
 
 
-
 @login_required
 @staff_required
 def staff_dashboard(request):
@@ -46,8 +45,8 @@ def staff_dashboard(request):
             'residents': residents,
             'user_role': membership.role,
             'streets': streets,  # ПЕРЕДАЄМО СПИСОК
-            'form': form,        # ПЕРЕДАЄМО ФОРМУ
-        })
+            'form': form,  # ПЕРЕДАЄМО ФОРМУ
+            })
 
 
 @login_required
@@ -66,64 +65,6 @@ def all_readings(request):
             'cooperative': membership.cooperative,
             'user_role': membership.role
             })
-
-
-@login_required
-@staff_required
-def edit_reading(request, reading_id):
-    """Редагування показників з перевіркою на зменшення значень"""
-    reading = get_object_or_404(Reading, id=reading_id)
-    membership = Membership.objects.get(
-        user=request.user, role__in=['chairman', 'accountant'])
-
-    previous = Reading.objects.filter(
-        meter=reading.meter,
-        date__lt=reading.date
-        ).order_by('-date').first()
-
-    if request.method == 'POST':
-        try:
-            if reading.meter.is_two_zone:
-                val_day = float(request.POST.get('value_day', 0))
-                val_night = float(request.POST.get('value_night', 0))
-
-                if previous:
-                    if val_day < float(
-                            previous.value_day or 0) or val_night < float(
-                            previous.value_night or 0):
-                        messages.error(
-                            request,
-                            "Показники не можуть бути меншими за попередні!")
-                        return render(
-                            request, 'staff/edit_reading.html', {
-                                'reading': reading, 'user_role': membership.role
-                                })
-
-                reading.value_day = val_day
-                reading.value_night = val_night
-                reading.value_total = val_day + val_night
-            else:
-                val_total = float(request.POST.get('value_total', 0))
-                if previous and val_total < float(previous.value_total):
-                    messages.error(
-                        request, "Показник не може бути меншим за попередній!")
-                    return render(
-                        request, 'staff/edit_reading.html', {
-                            'reading': reading, 'user_role': membership.role
-                            })
-
-                reading.value_total = val_total
-
-            reading.save()
-            messages.success(request, "Показники успішно оновлено.")
-            return redirect('staff_readings')
-        except ValueError:
-            messages.error(request, "Будь ласка, введіть числові значення.")
-
-    return render(
-        request, 'staff/edit_reading.html',
-        {'reading': reading, 'user_role': membership.role})
-
 
 
 @login_required
@@ -223,7 +164,6 @@ def delete_member(request, membership_id):
     return redirect('staff_manage')
 
 
-
 @login_required
 @chairman_required
 def update_tariffs(request):
@@ -318,3 +258,170 @@ def voting_list(request):
             'user_role': membership.role,
             'cooperative': membership.cooperative
             })
+
+@login_required
+@staff_required
+def edit_reading(request, reading_id):
+    """Редагування показників з перевіркою на зменшення значень"""
+    reading = get_object_or_404(Reading, id=reading_id)
+    membership = Membership.objects.get(
+        user=request.user, role__in=['chairman', 'accountant'])
+
+    previous = Reading.objects.filter(
+        meter=reading.meter,
+        date__lt=reading.date
+        ).order_by('-date').first()
+
+    if request.method == 'POST':
+        try:
+            if reading.meter.is_two_zone:
+                val_day = float(request.POST.get('value_day', 0))
+                val_night = float(request.POST.get('value_night', 0))
+
+                if previous:
+                    if val_day < float(
+                            previous.value_day or 0) or val_night < float(
+                            previous.value_night or 0):
+                        messages.error(
+                            request,
+                            "Показники не можуть бути меншими за попередні!")
+                        return render(
+                            request, 'staff/edit_reading.html', {
+                                'reading': reading, 'user_role': membership.role
+                                })
+
+                reading.value_day = val_day
+                reading.value_night = val_night
+                reading.value_total = val_day + val_night
+            else:
+                val_total = float(request.POST.get('value_total', 0))
+                if previous and val_total < float(previous.value_total):
+                    messages.error(
+                        request, "Показник не може бути меншим за попередній!")
+                    return render(
+                        request, 'staff/edit_reading.html', {
+                            'reading': reading, 'user_role': membership.role
+                            })
+
+                reading.value_total = val_total
+
+            reading.save()
+            messages.success(request, "Показники успішно оновлено.")
+            return redirect('staff_readings')
+        except ValueError:
+            messages.error(request, "Будь ласка, введіть числові значення.")
+
+    return render(
+        request, 'staff/edit_reading.html',
+        {'reading': reading, 'user_role': membership.role})
+
+
+@login_required
+@staff_required
+def add_reading(request, membership_id):
+    print(
+        f"--- DEBUG: Спроба додати показник для Membership ID: {membership_id} ---")
+
+    target_membership = get_object_or_404(Membership, id=membership_id)
+
+    # Шукаємо лічильник мешканця. Оскільки це ForeignKey, беремо .first()
+    meter = Meter.objects.filter(membership=target_membership).first()
+
+    if not meter:
+        messages.error(
+            request,
+            f"У мешканця {target_membership.user.username} не знайдено зареєстрованого лічильника!")
+        return redirect('staff_dashboard')
+
+    # Останній показник для перевірки на зменшення
+    previous = Reading.objects.filter(meter=meter).order_by(
+        '-date', '-id').first()
+
+    if request.method == 'POST':
+        try:
+            # Отримуємо дані з POST (імена мають збігатися з input name у шаблоні)
+            v_day = float(
+                request.POST.get('value_day', 0)) if meter.is_two_zone else 0
+            v_night = float(
+                request.POST.get('value_night', 0)) if meter.is_two_zone else 0
+            v_total = float(
+                request.POST.get(
+                    'value_total', 0)) if not meter.is_two_zone else (
+                        v_day + v_night)
+
+            # Перевірка на зменшення значень
+            if previous:
+                if meter.is_two_zone:
+                    if v_day < float(
+                            previous.value_day or 0) or v_night < float(
+                            previous.value_night or 0):
+                        messages.error(
+                            request,
+                            "Показники (День/Ніч) не можуть бути меншими за попередні!")
+                        return render(
+                            request, 'staff/add_reading.html', {
+                                'target_member': target_membership,
+                                'meter': meter, 'previous': previous
+                                })
+                else:
+                    if v_total < float(previous.value_total or 0):
+                        messages.error(
+                            request,
+                            "Загальний показник не може бути меншим за попередній!")
+                        return render(
+                            request, 'staff/add_reading.html', {
+                                'target_member': target_membership,
+                                'meter': meter, 'previous': previous
+                                })
+
+            # Створення запису. Поле date не передаємо, бо воно auto_now_add
+            Reading.objects.create(
+                meter=meter,
+                value_day=v_day if meter.is_two_zone else None,
+                value_night=v_night if meter.is_two_zone else None,
+                value_total=v_total,
+                submitted_by=request.user  # Хто з персоналу вніс дані
+                )
+
+            messages.success(
+                request,
+                f"Показники для {target_membership.user.username} успішно додано.")
+            return redirect(
+                'staff_readings')  # Повертаємо до списку всіх показників
+
+        except ValueError:
+            messages.error(request, "Будь ласка, введіть числові значення.")
+
+    return render(
+        request, 'staff/add_reading.html', {
+            'target_member': target_membership,
+            'meter': meter,
+            'previous': previous
+            })
+
+
+@login_required
+@staff_required
+def find_meter_by_number(request):
+    """Сторінка вводу номеру лічильника для переходу до додавання показників"""
+    if request.method == 'POST':
+        meter_number = request.POST.get('meter_number')
+
+        # Шукаємо лічильник за точним номером
+        try:
+            meter = Meter.objects.get(number=meter_number)
+
+            if meter.membership:
+                # Якщо лічильник має власника - переходимо на форму додавання
+                return redirect(
+                    'add_reading', membership_id=meter.membership.id)
+            else:
+                messages.error(
+                    request,
+                    f"Лічильник №{meter_number} знайдено, але він не прив'язаний до жодного мешканця!")
+
+        except Meter.DoesNotExist:
+            messages.error(
+                request, f"Лічильник з номером '{meter_number}' не знайдено.")
+
+    return render(request, 'staff/find_meter.html')

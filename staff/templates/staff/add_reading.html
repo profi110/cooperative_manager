@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% include 'staff/navbar.html' %}
+
+    <div class="container mt-5">
+        <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    📊 Додати показники: {{ target_member.user.get_full_name|default:target_member.user.username }}
+                </h5>
+            </div>
+
+            <div class="card-body">
+                <div class="alert alert-light border mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Адреса:</small>
+                            <strong>{{ target_member.street.name }}, {{ target_member.plot_number }}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Лічильник:</small>
+                            <strong>№{{ meter.number }}</strong>
+                            {% if meter.is_two_zone %}
+                                <span class="badge badge-info">День/Ніч</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Звичайний</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if previous %}
+                    <div class="alert alert-warning small">
+                        <strong>Останні зафіксовані показники ({{ previous.date|date:"d.m.Y" }}):</strong>
+                        <hr class="my-1">
+                        {% if meter.is_two_zone %}
+                            <div>☀️ День: <strong>{{ previous.value_day }}</strong></div>
+                            <div>🌑 Ніч: <strong>{{ previous.value_night }}</strong></div>
+                        {% else %}
+                            <div>⚡️ Загальний: <strong>{{ previous.value_total }}</strong></div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info small">
+                        Це перші показники для цього лічильника. Початкове значення: <strong>{{ meter.initial_value }}</strong>
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if meter.is_two_zone %}
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>☀️ День (кВт)</label>
+                                <input type="number" step="0.01" name="value_day" class="form-control" required>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>🌑 Ніч (кВт)</label>
+                                <input type="number" step="0.01" name="value_night" class="form-control" required>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="form-group">
+                            <label>⚡️ Поточний показник (кВт)</label>
+                            <input type="number" step="0.01" name="value_total" class="form-control" required>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-success btn-block btn-lg shadow-sm">
+                            💾 Зберегти показники
+                        </button>
+                        <a href="{% url 'staff_readings' %}" class="btn btn-link btn-block text-muted mt-2">
+                            Скасувати
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
