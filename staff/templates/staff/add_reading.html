@@ -12,6 +12,18 @@
             </div>
 
             <div class="card-body">
+                {% if not is_window_open %}
+                    <div class="alert alert-danger shadow-sm">
+                        ⛔️ <strong>Подача закрита!</strong><br>
+                        Прийом показників дозволено лише в <strong>останній день місяця</strong> або <strong>1-го числа</strong>.
+                    </div>
+                {% elif has_reading %}
+                    <div class="alert alert-warning shadow-sm">
+                        ✅ <strong>Показники вже подано!</strong><br>
+                        За поточний звітний період дані для цього лічильника вже внесено.
+                    </div>
+                {% endif %}
+
                 <div class="alert alert-light border mb-4">
                     <div class="row">
                         <div class="col-md-6">
@@ -50,32 +62,36 @@
                 <form method="post">
                     {% csrf_token %}
 
-                    {% if meter.is_two_zone %}
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>☀️ День (кВт)</label>
-                                <input type="number" step="0.01" name="value_day" class="form-control" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>🌑 Ніч (кВт)</label>
-                                <input type="number" step="0.01" name="value_night" class="form-control" required>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="form-group">
-                            <label>⚡️ Поточний показник (кВт)</label>
-                            <input type="number" step="0.01" name="value_total" class="form-control" required>
-                        </div>
-                    {% endif %}
+                    <fieldset {% if not is_window_open or has_reading %}disabled{% endif %}>
 
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-success btn-block btn-lg shadow-sm">
-                            💾 Зберегти показники
-                        </button>
-                        <a href="{% url 'staff_readings' %}" class="btn btn-link btn-block text-muted mt-2">
-                            Скасувати
-                        </a>
-                    </div>
+                        {% if meter.is_two_zone %}
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>☀️ День (кВт)</label>
+                                    <input type="number" step="0.01" name="value_day" class="form-control" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>🌑 Ніч (кВт)</label>
+                                    <input type="number" step="0.01" name="value_night" class="form-control" required>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="form-group">
+                                <label>⚡️ Поточний показник (кВт)</label>
+                                <input type="number" step="0.01" name="value_total" class="form-control" required>
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-success btn-block btn-lg shadow-sm">
+                                💾 Зберегти показники
+                            </button>
+                        </div>
+                    </fieldset>
+
+                    <a href="{% url 'staff_readings' %}" class="btn btn-link btn-block text-muted mt-2">
+                        Скасувати / Назад
+                    </a>
                 </form>
             </div>
         </div>

@@ -7,21 +7,19 @@ from users.models import CustomUser
 from cooperatives.models import Membership, Cooperative, Street
 from meters.models import Meter, Reading
 from .forms import *
+from datetime import timedelta
 
 
 @login_required
 @staff_required
 def staff_dashboard(request):
     """Головна панель: Голова бачить все, Бухгалтер — лише навігацію"""
-    # Отримуємо членство та кооператив
     membership = Membership.objects.get(
         user=request.user, role__in=['chairman', 'accountant'])
     cooperative = membership.cooperative
 
-    # 1. ДОДАЄМО: Отримуємо список вулиць для цього кооперативу
     streets = Street.objects.filter(cooperative=cooperative)
 
-    # 2. ДОДАЄМО: Створюємо порожню форму для поля "Нова вулиця"
     form = StreetForm()
 
     residents = []
@@ -29,7 +27,6 @@ def staff_dashboard(request):
         residents = CustomUser.objects.filter(
             coop_id=cooperative.id, is_approved=False)
 
-    # 3. ДОДАЄМО: Обробка створення вулиці прямо з дашборду
     if request.method == 'POST':
         form = StreetForm(request.POST)
         if form.is_valid():
@@ -44,8 +41,8 @@ def staff_dashboard(request):
             'cooperative': cooperative,
             'residents': residents,
             'user_role': membership.role,
-            'streets': streets,  # ПЕРЕДАЄМО СПИСОК
-            'form': form,  # ПЕРЕДАЄМО ФОРМУ
+            'streets': streets,
+            'form': form,
             })
 
 
@@ -125,7 +122,6 @@ def manage_coop(request):
 @login_required
 @staff_required
 def edit_member(request, membership_id):
-    # Отримуємо запис членства за ID
     membership = get_object_or_404(Membership, id=membership_id)
 
     if request.method == 'POST':
@@ -195,12 +191,10 @@ def manage_streets(request):
             street.cooperative = coop
             street.save()
             messages.success(request, f"Вулицю {street.name} успішно додано.")
-            # Повертаємо на дашборд замість окремої сторінки
             return redirect('staff_dashboard')
     else:
         form = StreetForm()
 
-    # Якщо зайти на цю сторінку просто через GET, вона все ще працюватиме
     return render(
         request, 'staff/cards/streets.html', {
             'streets': streets,
@@ -215,12 +209,10 @@ def edit_street(request, street_id):
     street = get_object_or_404(Street, id=street_id)
 
     if request.method == 'POST':
-        # Передаємо instance=street, щоб оновити існуючий запис
         form = StreetForm(request.POST, instance=street)
         if form.is_valid():
             form.save()
             messages.success(request, f"Назву вулиці змінено на {street.name}.")
-            # Повертаємо на дашборд
             return redirect('staff_dashboard')
     else:
         form = StreetForm(instance=street)
@@ -243,7 +235,6 @@ def delete_street(request, street_id):
         street.delete()
         messages.warning(request, f"Вулицю {name} видалено.")
 
-    # Повертаємо на дашборд
     return redirect('staff_dashboard')
 
 
@@ -258,6 +249,7 @@ def voting_list(request):
             'user_role': membership.role,
             'cooperative': membership.cooperative
             })
+
 
 @login_required
 @staff_required
@@ -281,7 +273,7 @@ def edit_reading(request, reading_id):
                 if previous:
                     if val_day < float(
                             previous.value_day or 0) or val_night < float(
-                            previous.value_night or 0):
+                        previous.value_night or 0):
                         messages.error(
                             request,
                             "Показники не можуть бути меншими за попередні!")
@@ -319,27 +311,50 @@ def edit_reading(request, reading_id):
 @login_required
 @staff_required
 def add_reading(request, membership_id):
-    print(
-        f"--- DEBUG: Спроба додати показник для Membership ID: {membership_id} ---")
-
     target_membership = get_object_or_404(Membership, id=membership_id)
-
-    # Шукаємо лічильник мешканця. Оскільки це ForeignKey, беремо .first()
     meter = Meter.objects.filter(membership=target_membership).first()
 
     if not meter:
         messages.error(
             request,
-            f"У мешканця {target_membership.user.username} не знайдено зареєстрованого лічильника!")
+            f"У мешканця {target_membership.user.username} немає лічильника.")
         return redirect('staff_dashboard')
 
-    # Останній показник для перевірки на зменшення
+    today = timezone.localdate()
+    last_day_of_month = calendar.monthrange(today.year, today.month)[1]
+
+    is_submission_window_open = (today.day == last_day_of_month) or (
+            today.day == 1)
+
+    if not is_submission_window_open:
+        messages.warning(
+            request,
+            f"Подача показників закрита! Дозволено лише в останній день місяця або 1-го числа.")
+
+    reporting_date = today - timedelta(days=1) if today.day == 1 else today
+
+    has_reading_this_month = Reading.objects.filter(
+        meter=meter,
+        date__year=reporting_date.year,
+        date__month=reporting_date.month
+        ).exists()
+
     previous = Reading.objects.filter(meter=meter).order_by(
         '-date', '-id').first()
 
     if request.method == 'POST':
+        if not is_submission_window_open:
+            messages.error(
+                request, "Помилка! Подача показників зараз заборонена.")
+            return redirect('staff_readings')
+
+        if has_reading_this_month:
+            messages.error(
+                request,
+                f"Помилка! Показники за {reporting_date.strftime('%B')} вже подано.")
+            return redirect('staff_readings')
+
         try:
-            # Отримуємо дані з POST (імена мають збігатися з input name у шаблоні)
             v_day = float(
                 request.POST.get('value_day', 0)) if meter.is_two_zone else 0
             v_night = float(
@@ -347,56 +362,31 @@ def add_reading(request, membership_id):
             v_total = float(
                 request.POST.get(
                     'value_total', 0)) if not meter.is_two_zone else (
-                        v_day + v_night)
+                    v_day + v_night)
 
-            # Перевірка на зменшення значень
             if previous:
-                if meter.is_two_zone:
-                    if v_day < float(
-                            previous.value_day or 0) or v_night < float(
-                            previous.value_night or 0):
-                        messages.error(
-                            request,
-                            "Показники (День/Ніч) не можуть бути меншими за попередні!")
-                        return render(
-                            request, 'staff/add_reading.html', {
-                                'target_member': target_membership,
-                                'meter': meter, 'previous': previous
-                                })
-                else:
-                    if v_total < float(previous.value_total or 0):
-                        messages.error(
-                            request,
-                            "Загальний показник не може бути меншим за попередній!")
-                        return render(
-                            request, 'staff/add_reading.html', {
-                                'target_member': target_membership,
-                                'meter': meter, 'previous': previous
-                                })
+                pass
 
-            # Створення запису. Поле date не передаємо, бо воно auto_now_add
             Reading.objects.create(
                 meter=meter,
                 value_day=v_day if meter.is_two_zone else None,
                 value_night=v_night if meter.is_two_zone else None,
                 value_total=v_total,
-                submitted_by=request.user  # Хто з персоналу вніс дані
+                submitted_by=request.user,
                 )
-
-            messages.success(
-                request,
-                f"Показники для {target_membership.user.username} успішно додано.")
-            return redirect(
-                'staff_readings')  # Повертаємо до списку всіх показників
+            messages.success(request, "Показники успішно додано.")
+            return redirect('staff_readings')
 
         except ValueError:
-            messages.error(request, "Будь ласка, введіть числові значення.")
+            messages.error(request, "Введіть коректні числа.")
 
     return render(
         request, 'staff/add_reading.html', {
             'target_member': target_membership,
             'meter': meter,
-            'previous': previous
+            'previous': previous,
+            'is_window_open': is_submission_window_open,
+            'has_reading': has_reading_this_month
             })
 
 
@@ -407,12 +397,10 @@ def find_meter_by_number(request):
     if request.method == 'POST':
         meter_number = request.POST.get('meter_number')
 
-        # Шукаємо лічильник за точним номером
         try:
             meter = Meter.objects.get(number=meter_number)
 
             if meter.membership:
-                # Якщо лічильник має власника - переходимо на форму додавання
                 return redirect(
                     'add_reading', membership_id=meter.membership.id)
             else:

@@ -2,52 +2,65 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow mx-auto" style="max-width: 600px; border-radius: 10px; overflow: hidden;">
-        <div class="card-header bg-primary text-white py-3">
-            <h4 class="mb-0 text-center">📩 Подати показники</h4>
+    <div class="card shadow mx-auto" style="max-width: 600px;">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">📊 Подача показників</h4>
         </div>
+        <div class="card-body">
 
-        <div class="card-body p-4">
-            <div class="alert alert-info mb-4" style="background-color: #e3f2fd; border: none;">
-                <p class="mb-1"><strong>Лічильник:</strong> №{{ meter.number }}</p>
-                <p class="mb-0"><strong>Тип:</strong> {{ meter.get_hierarchy_display }}
-                   ({% if meter.is_two_zone %}День/Ніч{% else %}Звичайний{% endif %})</p>
-            </div>
+            {% if not is_window_open %}
+                <div class="alert alert-danger">
+                    🔒 <strong>Прийом показників закрит.</strong><br>
+                    Подача можлива лише в <strong>останній день місяця</strong> або <strong>1-го числа</strong>.
+                </div>
+            {% elif has_reading %}
+                <div class="alert alert-success">
+                    ✅ <strong>Дякуємо!</strong><br>
+                    Ви вже подали показники за цей місяць.
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    👋 Введіть актуальні дані вашого лічильника <strong>№{{ meter.number }}</strong>.
+                </div>
+            {% endif %}
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
 
-                <h5 class="mb-3">Загальний показник (кВт·год)</h5>
-                <p class="small text-muted mb-4">Введіть поточне значення на табло лічильника.</p>
+                <fieldset {% if not is_window_open or has_reading %}disabled{% endif %}>
 
-                {% if meter.is_two_zone %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="font-weight-bold">T1 (День)</label>
-                            <input type="number" step="0.01" name="value_day" class="form-control form-control-lg" placeholder="0.00" required>
+                    {% if meter.is_two_zone %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>☀️ День (кВт)</label>
+                                <input type="number" step="0.01" name="value_day" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>🌑 Ніч (кВт)</label>
+                                <input type="number" step="0.01" name="value_night" class="form-control" required>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="font-weight-bold">T2 (Ніч)</label>
-                            <input type="number" step="0.01" name="value_night" class="form-control form-control-lg" placeholder="0.00" required>
+                    {% else %}
+                        <div class="mb-3">
+                            <label>⚡️ Загальний показник (кВт)</label>
+                            <input type="number" step="0.01" name="value_total" class="form-control" required>
                         </div>
-                    </div>
-                {% else %}
-                    <div class="form-group mb-4">
-                        <label class="font-weight-bold">Поточне значення</label>
-                        <input type="number" step="0.01" name="value_total" class="form-control form-control-lg" placeholder="0.00" required>
-                    </div>
-                {% endif %}
+                    {% endif %}
 
-                <div class="form-group mt-4">
-                    <label class="font-weight-bold">📸 Фото лічильника (за бажанням)</label>
-                    <input type="file" name="photo" class="form-control-file border p-2 w-100" style="border-radius: 5px;">
-                    <small class="text-muted">Ви можете додати фото для підтвердження показників у разі спірних питань.</small>
-                </div>
+                    <div class="mb-3">
+                        <label>📸 Фото лічильника (необов'язково)</label>
+                        <input type="file" name="photo" class="form-control">
+                    </div>
 
-                <button type="submit" class="btn btn-success btn-block btn-lg mt-5 py-3 font-weight-bold" style="border-radius: 8px;">
-                    Надіслати дані
-                </button>
+                    <button type="submit" class="btn btn-success w-100">
+                        Відправити показники
+                    </button>
+                </fieldset>
             </form>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'user_dashboard' %}" class="text-muted">Назад на головну</a>
+            </div>
         </div>
     </div>
 </div>

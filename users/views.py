@@ -3,13 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.http import JsonResponse
 
-# Імпортуємо моделі та форми один раз
 from cooperatives.models import Membership, Cooperative
 from meters.models import Meter
 from .models import CustomUser
 from .forms import CustomUserCreationForm
 
-# --- API Ендпоінти ---
 
 def check_coop_id_api(request):
     """API для перевірки існування кооперативу та отримання вулиць через fetch"""
@@ -24,7 +22,6 @@ def check_coop_id_api(request):
         try:
             cooperative = Cooperative.objects.get(id=coop_id)
             data['exists'] = True
-            # Використовуємо title або name залежно від твоєї моделі
             data['name'] = getattr(cooperative, 'title', getattr(cooperative, 'name', ''))
             data['streets'] = list(cooperative.street_set.values_list('name', flat=True))
         except (Cooperative.DoesNotExist, ValueError):
@@ -46,7 +43,6 @@ def check_duplicates_api(request):
 
     return JsonResponse(data)
 
-# --- Сторінки користувача ---
 
 def home(request):
     """Головна сторінка сайту"""
@@ -57,17 +53,14 @@ def dashboard(request):
     """Особистий кабінет з редіректом за роллю та перевіркою схвалення"""
     membership = Membership.objects.filter(user=request.user).first()
 
-    # Якщо користувач — голова або бухгалтер, відправляємо в адмін-панель
     if membership and membership.role in ['chairman', 'accountant']:
         return redirect('staff_dashboard')
 
-    # Якщо реєстрація ще не схвалена головою
     if not request.user.is_approved:
         coop = Cooperative.objects.filter(id=request.user.coop_id).first()
         coop_name = coop.title if coop else "кооперативу"
         return render(request, 'registration/pending_approval.html', {'coop_name': coop_name})
 
-    # Відображення показників для звичайного мешканця
     meter = Meter.objects.filter(membership=membership).first()
     readings = meter.readings.all()[:5] if meter else []
 
@@ -83,13 +76,12 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_approved = False  # Користувач чекає на схвалення
+            user.is_approved = False
             user.save()
 
             coop = Cooperative.objects.filter(id=user.coop_id).first()
             coop_name = coop.title if coop else "кооперативу"
 
-            # Розлогінюємо користувача, щоб він не міг зайти до схвалення
             auth_logout(request)
             return render(request, 'registration/pending_approval.html', {'coop_name': coop_name})
     else:
