@@ -1,30 +1,53 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow mx-auto" style="max-width: 600px; border-radius: 15px;">
-        <div class="card-body text-center">
-            <h1 class="mb-4">👋 Привіт, {{ user.username }}!</h1>
-            <p class="text-muted">Ваша адреса: <strong>{{ membership.street.name }}, діл. {{ membership.plot_number }}</strong></p>
 
-            {% if meter %}
-                <div class="alert alert-info py-2">Лічильник: №{{ meter.number }}</div>
-                <a href="{% url 'submit_reading' %}" class="btn btn-success btn-lg btn-block py-3 font-weight-bold">
+    <div class="d-flex justify-content-end mb-2" style="max-width: 600px; margin: 0 auto;">
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary border-0">
+                🚪 Вийти
+            </button>
+        </form>
+    </div>
+
+    <div class="card shadow-sm mx-auto" style="max-width: 600px; border-radius: 15px;">
+        <div class="card-body text-center pt-5 pb-4">
+
+            <h3 class="mb-2">👋 Привіт, {{ user.username }}!</h3>
+
+            <p class="text-muted mb-4">
+                Ваша адреса:
+                <strong>{{ meter.membership.street.name }}, діл. {{ meter.membership.plot_number }}</strong>
+            </p>
+
+            <div class="alert alert-info d-inline-block px-5 py-2 mb-4" style="background-color: #e0f2f1; border: none; color: #00695c;">
+                Лічильник: №{{ meter.number }}
+            </div>
+
+            <div class="mb-4">
+                <a href="{% url 'submit_reading' %}" class="btn btn-success btn-lg w-100 shadow-sm" style="background-color: #43a047; border: none;">
                     📊 Передати показники
                 </a>
-            {% else %}
-                <div class="alert alert-warning">Очікуйте на створення лічильника головою кооперативу.</div>
-            {% endif %}
+            </div>
+
         </div>
     </div>
 
-    {% if readings %}
-    <div class="card mt-4 mx-auto border-0 shadow-sm" style="max-width: 600px;">
-        <table class="table mb-0">
-            <thead class="bg-light"><tr><th>Дата</th><th>кВт⋅год</th><th>Сума</th></tr></thead>
+    <div class="card shadow-sm mx-auto mt-4" style="max-width: 600px; border-radius: 10px; overflow: hidden;">
+        <table class="table table-hover mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="border-0 pl-4">Дата</th>
+                    <th class="border-0">кВт•год</th>
+                    <th class="border-0">Сума</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for r in readings %}
                 <tr>
-                    <td>{{ r.date|date:"d.m" }}</td>
+                    <td class="pl-4">{{ r.date|date:"d.m" }}</td>
                     <td>{{ r.value_total }}</td>
                     <td class="text-success font-weight-bold">{{ r.get_cost|floatformat:2 }} грн</td>
                 </tr>
@@ -32,6 +55,5 @@
             </tbody>
         </table>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
