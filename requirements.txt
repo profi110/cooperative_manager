@@ -1,0 +1,19 @@
+# Основной фреймворк и API
+Django>=5.0
+djangorestframework  # Твой интерес к DRF
+
+# Работа с базой данных PostgreSQL
+psycopg2-binary==2.9.9
+dj-database-url==2.1.0
+
+# Сервер для Production (AWS)
+gunicorn==21.2.0
+
+# Обработка статических файлов (CSS/JS) в облаке
+whitenoise==6.6.0
+
+# Работа с изображениями (для фото счетчиков)
+Pillow==10.2.0
+
+# Работа с переменными окружения
+python-dotenv==1.0.1
