@@ -70,9 +70,11 @@ def dashboard(request):
         'membership': membership
     })
 
+
 def register(request):
-    """Реєстрація нового мешканця з автоматичним статусом очікування"""
     if request.method == 'POST':
+        print("DEBUG: POST data received:", request.POST)
+
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
@@ -83,7 +85,11 @@ def register(request):
             coop_name = coop.title if coop else "кооперативу"
 
             auth_logout(request)
-            return render(request, 'registration/pending_approval.html', {'coop_name': coop_name})
+            return render(
+                request, 'registration/pending_approval.html',
+                {'coop_name': coop_name})
+        else:
+            print("Form Validation Errors:", form.errors)
     else:
         form = CustomUserCreationForm()
 

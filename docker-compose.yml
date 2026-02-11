@@ -17,7 +17,8 @@ services:
 
   web:
     build: .
-    # Монтуємо папку проекту, щоб зміни коду підтягувалися одразу
+    # Додаємо команду запуску спеціально для розробки
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
       - media_volume:/app/media
@@ -31,4 +32,4 @@ services:
 
 volumes:
   postgres_data:
-  media_volume:  # Тут зберігатимуться фото лічильників мешканців
+  media_volume:

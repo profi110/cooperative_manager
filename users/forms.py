@@ -6,61 +6,47 @@ from cooperatives.models import Cooperative
 
 class CustomUserCreationForm(UserCreationForm):
     last_name = forms.CharField(
-        label="Прізвище",
-        widget=forms.TextInput(attrs={'placeholder': 'Наприклад: Шевченко'})
-        )
+        label="Прізвище", widget=forms.TextInput(
+            attrs={'placeholder': 'Шевченко'}))
     first_name = forms.CharField(
-        label="Ім'я",
-        widget=forms.TextInput(attrs={'placeholder': 'Наприклад: Тарас'})
-        )
+        label="Ім'я", widget=forms.TextInput(
+            attrs={'placeholder': 'Тарас'}))
     middle_name = forms.CharField(
-        label="По батькові",
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Наприклад: Григорович'})
-        )
+        label="По батькові", required=False, widget=forms.TextInput(
+            attrs={'placeholder': 'Григорович'}))
     phone_number = forms.CharField(
         label="📱 Номер телефону",
-        widget=forms.TextInput(attrs={'placeholder': '+380...'})
-        )
-
-    coop_id = forms.CharField(
-        label="🏢 ID Кооперативу",
         widget=forms.TextInput(
-            attrs={'id': 'id_coop_id', 'placeholder': 'Наприклад: 1'})
-        )
-    street = forms.CharField(
+            attrs={'placeholder': '+380...'}))
+    coop_id = forms.CharField(
+        label="🏢 ID Кооперативу", widget=forms.TextInput(
+            attrs={'id': 'id_coop_id', 'placeholder': '1'}))
+    street = forms.ChoiceField(
         label="📍 Оберіть вашу вулицю",
-        widget=forms.Select(attrs={'id': 'id_street'}),
-        required=True
-        )
+        widget=forms.Select(attrs={'id': 'id_street'}), required=True)
     house_number = forms.CharField(
-        label="🏠 Номер будинку/ділянки",
-        widget=forms.TextInput(attrs={'placeholder': 'Наприклад: 12А'})
-        )
+        label="🏠 Номер будинку/ділянки", widget=forms.TextInput(
+            attrs={'placeholder': '12А'}))
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = (
-            'username', 'email', 'last_name', 'first_name',
-            'middle_name', 'phone_number', 'coop_id', 'street', 'house_number'
-            )
+        fields = ('username', 'email', 'last_name', 'first_name', 'middle_name',
+                  'phone_number', 'coop_id', 'street', 'house_number')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for field in self.fields.values():
-            existing_class = field.widget.attrs.get('class', '')
-            field.widget.attrs[
-                'class'] = f"{existing_class} form-control".strip()
-
-        if 'coop_id' in self.data:
+        data = kwargs.get('data') or self.data
+        if data and data.get('coop_id'):
             try:
-                coop_id = self.data.get('coop_id')
+                coop_id = data.get('coop_id')
                 cooperative = Cooperative.objects.get(id=coop_id)
                 streets = cooperative.street_set.all()
-                self.fields['street'].widget.choices = [(s.name, s.name) for s
-                                                        in streets]
+                self.fields['street'].choices = [('',
+                                                  '-- Оберіть вулицю --')] + [
+                                                    (s.name, s.name) for s in
+                                                    streets]
             except (ValueError, TypeError, Cooperative.DoesNotExist):
-                self.fields['street'].widget.choices = [('', '---------')]
+                self.fields['street'].choices = [('', '---------')]
         else:
-            self.fields['street'].widget.choices = [('', '---------')]
+            self.fields['street'].choices = [('', '---------')]

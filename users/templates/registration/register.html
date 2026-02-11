@@ -14,6 +14,21 @@
             <p class="text-center text-muted small">Будь ласка, заповніть дані для доступу до системи</p>
             <hr>
 
+            {% if form.errors %}
+                <div class="alert alert-danger" style="border-radius: 10px;">
+                    <ul class="mb-0">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
             <form method="post" id="registrationForm">
                 {% csrf_token %}
 
@@ -21,17 +36,14 @@
                     <div class="col-md-4 form-group">
                         <label><strong>{{ form.last_name.label }}</strong></label>
                         {{ form.last_name }}
-                        <div class="text-danger small">{{ form.last_name.errors }}</div>
                     </div>
                     <div class="col-md-4 form-group">
                         <label><strong>{{ form.first_name.label }}</strong></label>
                         {{ form.first_name }}
-                        <div class="text-danger small">{{ form.first_name.errors }}</div>
                     </div>
                     <div class="col-md-4 form-group">
                         <label><strong>{{ form.middle_name.label }}</strong></label>
                         {{ form.middle_name }}
-                        <div class="text-danger small">{{ form.middle_name.errors }}</div>
                     </div>
                 </div>
 
@@ -40,13 +52,11 @@
                         <label><strong>{{ form.phone_number.label }}</strong></label>
                         {{ form.phone_number }}
                         <span id="phone-error" class="text-danger small d-block"></span>
-                        <div class="text-danger small">{{ form.phone_number.errors }}</div>
                     </div>
                     <div class="col-md-6 form-group">
                         <label><strong>Логін (username)</strong></label>
                         {{ form.username }}
                         <span id="username-error" class="text-danger small d-block"></span>
-                        <div class="text-danger small">{{ form.username.errors }}</div>
                     </div>
                 </div>
 
@@ -58,14 +68,15 @@
                     <div id="coop-info" style="margin: 10px 0; padding: 10px; border-radius: 5px; display: none;">
                         <span id="coop-message"></span>
                     </div>
+                    <div class="form-group">
+                        <label><strong>{{ form.street.label }}</strong></label>
+                        {{ form.street }}
+                        <div class="text-danger small">{{ form.street.errors }}</div>
+                    </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-8 form-group">
-                        <label><strong>{{ form.street.label }}</strong></label>
-                        {{ form.street }}
-                    </div>
-                    <div class="col-md-4 form-group">
+                    <div class="col-md-12 form-group">
                         <label><strong>{{ form.house_number.label }}</strong></label>
                         {{ form.house_number }}
                     </div>
@@ -74,118 +85,133 @@
                 <div class="form-group">
                     <label><strong>Пароль</strong></label>
                     {{ form.password1 }}
+                    <div class="text-danger small">{{ form.password1.errors }}</div>
                 </div>
                 <div class="form-group">
                     <label><strong>Підтвердження пароля</strong></label>
                     {{ form.password2 }}
+                    <div class="text-danger small">{{ form.password2.errors }}</div>
                 </div>
 
-                <button type="submit" id="submitBtn" class="btn btn-success mt-3" style="width: 100%; padding: 12px; background-color: #2ecc71; border: none; color: white; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s;">
+                <button type="submit" id="submitBtn" class="btn btn-success mt-3" style="width: 100%; padding: 12px; font-weight: bold;">
                     🚀 Відправити заявку
                 </button>
             </form>
         </div>
-        <p class="text-center mt-3">Вже маєте акаунт? <a href="{% url 'login' %}" style="color: #2ecc71; font-weight: bold;">Увійти</a></p>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Елементи форми
-            const coopInput = document.getElementById('id_coop_id');
-            const streetSelect = document.getElementById('id_street');
-            const infoBox = document.getElementById('coop-info');
-            const messageSpan = document.getElementById('coop-message');
-            const usernameInput = document.getElementById('id_username');
-            const phoneInput = document.getElementById('id_phone_number');
-            const usernameError = document.getElementById('username-error');
-            const phoneError = document.getElementById('phone-error');
-            const submitBtn = document.getElementById('submitBtn');
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const coopInput = document.getElementById('id_coop_id');
+        const streetSelect = document.getElementById('id_street');
+        const infoBox = document.getElementById('coop-info');
+        const messageSpan = document.getElementById('coop-message');
+        const usernameInput = document.getElementById('id_username');
+        const phoneInput = document.getElementById('id_phone_number');
+        const usernameError = document.getElementById('username-error');
+        const phoneError = document.getElementById('phone-error');
+        const submitBtn = document.getElementById('submitBtn');
 
-            // Стан валідації
-            let validation = {
-                coop: false,
-                username: false,
-                phone: false
-            };
+        let validation = { coop: false, username: false, phone: false };
 
-            // Функція перевірки загального стану форми
-            function toggleSubmit() {
-                submitBtn.disabled = !(validation.coop && validation.username && validation.phone);
+        function toggleSubmit() {
+            // Кнопка активується, лише коли всі три перевірки пройдені
+            submitBtn.disabled = !(validation.coop && validation.username && validation.phone);
+
+            // Візуальний ефект: змінюємо прозорість, щоб було видно, що кнопка активна
+            if (!submitBtn.disabled) {
+                submitBtn.style.opacity = "1";
+            } else {
+                submitBtn.style.opacity = "0.6";
             }
+        }
 
-            // 1. ПЕРЕВІРКА КООПЕРАТИВУ (через fetch)
-            coopInput.addEventListener('input', function() {
-                const coopId = this.value;
-                if (coopId.length > 0) {
-                    fetch(`{% url 'check_coop_id' %}?coop_id=${coopId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.exists) {
-                                infoBox.style.display = 'block';
-                                infoBox.style.backgroundColor = '#d4edda';
-                                infoBox.style.color = '#155724';
-                                messageSpan.textContent = "✅ Кооператив знайдено: " + data.name;
-
-                                // Оновлення вулиць
-                                streetSelect.innerHTML = '<option value="">-- Оберіть вулицю --</option>';
-                                data.streets.forEach(street => {
-                                    const option = document.createElement('option');
-                                    option.value = street;
-                                    option.textContent = street;
-                                    streetSelect.appendChild(option);
-                                });
-                                validation.coop = true;
-                            } else {
-                                infoBox.style.display = 'block';
-                                infoBox.style.backgroundColor = '#f8d7da';
-                                infoBox.style.color = '#721c24';
-                                messageSpan.textContent = "❌ Кооператив не існує";
-                                streetSelect.innerHTML = '<option value="">---------</option>';
-                                validation.coop = false;
-                            }
-                            toggleSubmit();
-                        });
-                } else {
-                    infoBox.style.display = 'none';
-                    validation.coop = false;
-                    toggleSubmit();
-                }
-            });
-
-            // 2. ПЕРЕВІРКА ДУБЛІКАТІВ (Логін та Телефон)
-            function checkDuplicate(inputElement, errorElement, paramName, validationKey) {
-                const value = inputElement.value;
-                if (value.length < 3) {
-                    errorElement.textContent = "";
-                    inputElement.style.borderColor = "";
-                    validation[validationKey] = false;
-                    toggleSubmit();
-                    return;
-                }
-
-                fetch(`{% url 'api_check_duplicates' %}?${paramName}=${encodeURIComponent(value)}`)
+        coopInput.addEventListener('input', function() {
+            const coopId = this.value;
+            if (coopId.length > 0) {
+                fetch(`{% url 'check_coop_id' %}?coop_id=${coopId}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.is_taken) {
-                            inputElement.style.borderColor = "red";
-                            errorElement.textContent = "❌ Вже використовується";
-                            validation[validationKey] = false;
+                        if (data.exists) {
+                            infoBox.style.display = 'block';
+                            infoBox.style.backgroundColor = '#d4edda';
+                            infoBox.style.color = '#155724';
+                            messageSpan.textContent = "✅ Кооператив знайдено: " + data.name;
+
+                            const currentStreet = streetSelect.value;
+                            streetSelect.innerHTML = '<option value="">-- Оберіть вулицю --</option>';
+                            data.streets.forEach(street => {
+                                const option = document.createElement('option');
+                                option.value = street;
+                                option.textContent = street;
+                                if (street === currentStreet) option.selected = true;
+                                streetSelect.appendChild(option);
+                            });
+                            validation.coop = true;
                         } else {
-                            inputElement.style.borderColor = "#2ecc71";
-                            errorElement.textContent = "";
-                            validation[validationKey] = true;
+                            infoBox.style.display = 'block';
+                            infoBox.style.backgroundColor = '#f8d7da';
+                            infoBox.style.color = '#721c24';
+                            messageSpan.textContent = "❌ Кооператив не існує";
+                            streetSelect.innerHTML = '<option value="">---------</option>';
+                            validation.coop = false;
                         }
                         toggleSubmit();
-                    })
-                    .catch(err => console.error('Помилка API:', err));
+                    });
+            } else {
+                infoBox.style.display = 'none';
+                validation.coop = false;
+                toggleSubmit();
+            }
+        });
+
+        function checkDuplicate(inputElement, errorElement, paramName, validationKey) {
+            const value = inputElement.value;
+            if (value.length < 3) {
+                validation[validationKey] = false;
+                toggleSubmit();
+                return;
+            }
+            fetch(`{% url 'api_check_duplicates' %}?${paramName}=${encodeURIComponent(value)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_taken) {
+                        inputElement.style.borderColor = "red";
+                        errorElement.textContent = "❌ Вже використовується";
+                        validation[validationKey] = false;
+                    } else {
+                        inputElement.style.borderColor = "#2ecc71";
+                        errorElement.textContent = "";
+                        validation[validationKey] = true;
+                    }
+                    toggleSubmit();
+                });
+        }
+
+        usernameInput.addEventListener('input', () => checkDuplicate(usernameInput, usernameError, 'username', 'username'));
+        phoneInput.addEventListener('input', () => checkDuplicate(phoneInput, phoneError, 'phone', 'phone'));
+
+        // --- НОВИЙ БЛОК: ПРИМУСОВА ПЕРЕВІРКА ПРИ ЗАВАНТАЖЕННІ ---
+        function runInitialValidation() {
+            // 1. Перевірка кооперативу (запускає івент 'input')
+            if (coopInput.value.length > 0) {
+                coopInput.dispatchEvent(new Event('input'));
             }
 
-            usernameInput.addEventListener('input', () =>
-                checkDuplicate(usernameInput, usernameError, 'username', 'username'));
+            // 2. Перевірка логіна
+            if (usernameInput.value.length >= 3) {
+                checkDuplicate(usernameInput, usernameError, 'username', 'username');
+            }
 
-            phoneInput.addEventListener('input', () =>
-                checkDuplicate(phoneInput, phoneError, 'phone', 'phone'));
-        });
-    </script>
+            // 3. Перевірка телефону
+            if (phoneInput.value.length >= 3) {
+                checkDuplicate(phoneInput, phoneError, 'phone', 'phone');
+            }
+        }
+
+        // Запуск перевірки одразу після завантаження сторінки
+        runInitialValidation();
+    });
+</script>
 </body>
 </html>
