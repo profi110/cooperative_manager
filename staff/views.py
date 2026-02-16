@@ -117,26 +117,33 @@ def delete_registration_request_staff(request, user_id):
     return redirect('staff_dashboard')
 
 
+# staff/views.py
+
 @login_required
 @chairman_required
 def delete_all_registration_requests_staff(request):
     if request.method == 'POST':
-        # Фільтруємо: Тільки ті, хто не схвалений...
-        # ...АЛЕ виключаємо суперюзерів та персонал (голову)
-        pending_users = CustomUser.objects.filter(is_approved=False).exclude(
-            is_superuser=True
-            ).exclude(
-            is_staff=True
-            )
+        # 1. Знаходимо ID всіх людей, які мають будь-яку роль у кооперативі
+        # Це захистить навіть тих, у кого випадково стоїть is_approved=False
+        protected_ids = Membership.objects.values_list('user_id', flat=True)
+
+        # 2. Формуємо список на видалення
+        pending_users = CustomUser.objects.filter(
+            is_approved=False  # Тільки несхвалені
+        ).exclude(
+            id=request.user.id  # Виключаємо ВАС особисто (завжди!)
+        ).exclude(
+            id__in=protected_ids  # Виключаємо всіх, хто є в таблиці Membership (Голова, Персонал)
+        ).exclude(
+            is_superuser=True  # Виключаємо всіх суперюзерів
+        ).exclude(
+            is_staff=True  # Виключаємо весь персонал
+        )
 
         count = pending_users.count()
-
         if count > 0:
             pending_users.delete()
-            messages.warning(
-                request,
-                f"Видалено {count} заявок. Аккаунти персоналу та адмінів не постраждали."
-                )
+            messages.warning(request, f"Видалено {count} заявок. Всі захищені аккаунти збережено.")
         else:
             messages.info(request, "Немає заявок для видалення.")
 
