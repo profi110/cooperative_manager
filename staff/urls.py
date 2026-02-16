@@ -17,5 +17,5 @@ urlpatterns = [
     path('readings/edit/<int:reading_id>/', views.edit_reading, name='staff_edit_reading'),
     path('readings/find/', views.find_meter_by_number, name='find_meter_by_number'),
     path('delete-request/<int:user_id>/', views.delete_registration_request_staff, name='delete_registration_request_staff'),
-    path('delete-all-requests/', views.delete_all_registration_requests, name='delete_all_registration_requests'),
+    path('delete-all-requests/', views.delete_all_registration_requests_staff, name='delete_all_registration_requests_staff'),
 ]

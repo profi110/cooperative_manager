@@ -119,16 +119,24 @@ def delete_registration_request_staff(request, user_id):
 
 @login_required
 @chairman_required
-def delete_all_registration_requests(request):
+def delete_all_registration_requests_staff(request):
     if request.method == 'POST':
-        # Фільтруємо всіх, хто ще не підтверджений
-        pending_users = CustomUser.objects.filter(is_approved=False)
+        # Фільтруємо: Тільки ті, хто не схвалений...
+        # ...АЛЕ виключаємо суперюзерів та персонал (голову)
+        pending_users = CustomUser.objects.filter(is_approved=False).exclude(
+            is_superuser=True
+            ).exclude(
+            is_staff=True
+            )
+
         count = pending_users.count()
 
         if count > 0:
             pending_users.delete()
             messages.warning(
-                request, f"Усі заявки ({count} шт.) було успішно видалено.")
+                request,
+                f"Видалено {count} заявок. Аккаунти персоналу та адмінів не постраждали."
+                )
         else:
             messages.info(request, "Немає заявок для видалення.")
 
@@ -206,8 +214,6 @@ def update_tariffs(request):
     return redirect('staff_dashboard')
 
 
-@login_required
-@staff_required
 @login_required
 @staff_required
 def manage_streets(request):
