@@ -10,33 +10,46 @@
                     <th>Вулиця</th>
                     <th>Ділянка</th>
                     <th>Лічильник</th>
-                    <th>Дія</th>
+                    <th>Схвалити</th>
+                    <th>Видалити</th>
                 </tr>
             </thead>
             <tbody>
                 {% for resident in residents %}
                 <tr>
-                    <form action="{% url 'approve_resident_staff' resident.id %}" method="post">
-                        {% csrf_token %}
-                        <td><strong>{{ resident.username }}</strong></td>
-                        <td class="small">{{ resident.street }}</td>
-                        <td>
-                            <input type="text" name="plot_number" value="{{ resident.house_number }}" class="form-control form-control-sm" style="width: 70px;" required>
-                        </td>
-                        <td>
-                            <select name="meter_type" class="form-control form-control-sm">
-                                <option value="one_zone">1-зонний</option>
-                                <option value="two_zone">2-зонний (Д/Н)</option>
-                            </select>
-                        </td>
-                        <td>
+                    <td><strong>{{ resident.username }}</strong></td>
+                    <td class="small">{{ resident.street }}</td>
+
+                    <td>
+                        <input type="text" name="plot_number" value="{{ resident.house_number }}"
+                               form="approve-{{ resident.id }}"
+                               class="form-control form-control-sm" style="width: 70px;" required>
+                    </td>
+                    <td>
+                        <select name="meter_type" form="approve-{{ resident.id }}" class="form-control form-control-sm">
+                            <option value="one_zone">1-зонний</option>
+                            <option value="two_zone">2-зонний (Д/Н)</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <form id="approve-{{ resident.id }}" action="{% url 'approve_resident_staff' resident.id %}" method="post">
+                            {% csrf_token %}
                             <button type="submit" class="btn btn-success btn-sm font-weight-bold">Схвалити</button>
-                        </td>
-                    </form>
+                        </form>
+                    </td>
+
+                    <td>
+                        <form action="{% url 'delete_registration_request_staff' resident.id %}" method="post"
+                              onsubmit="return confirm('Ви впевнені, що хочете видалити заявку {{ resident.username }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">🗑</button>
+                        </form>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-5">Немає нових заявок</td>
+                    <td colspan="6" class="text-center text-muted py-5">Немає нових заявок</td>
                 </tr>
                 {% endfor %}
             </tbody>

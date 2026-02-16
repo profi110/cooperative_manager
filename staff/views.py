@@ -103,6 +103,21 @@ def approve_resident(request, user_id):
 
 
 @login_required
+@chairman_required  # Використовуйте ваш декоратор для безпеки
+def delete_registration_request_staff(request, user_id):
+    if request.method == 'POST':
+        # Видаляємо тільки якщо користувач ще не схвалений
+        user_to_delete = get_object_or_404(
+            CustomUser, id=user_id, is_approved=False)
+        username = user_to_delete.username
+        user_to_delete.delete()
+
+        messages.warning(
+            request, f"Заявку від {username} було остаточно видалено.")
+    return redirect('staff_dashboard')
+
+
+@login_required
 @chairman_required
 def manage_coop(request):
     """Список всіх мешканців кооперативу"""

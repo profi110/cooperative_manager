@@ -16,4 +16,5 @@ urlpatterns = [
     path('readings/add/<int:membership_id>/', views.add_reading, name='add_reading'),
     path('readings/edit/<int:reading_id>/', views.edit_reading, name='staff_edit_reading'),
     path('readings/find/', views.find_meter_by_number, name='find_meter_by_number'),
+    path('delete-request/<int:user_id>/', views.delete_registration_request_staff, name='delete_registration_request_staff'),
 ]
