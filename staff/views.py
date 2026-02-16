@@ -119,6 +119,24 @@ def delete_registration_request_staff(request, user_id):
 
 @login_required
 @chairman_required
+def delete_all_registration_requests(request):
+    if request.method == 'POST':
+        # Фільтруємо всіх, хто ще не підтверджений
+        pending_users = CustomUser.objects.filter(is_approved=False)
+        count = pending_users.count()
+
+        if count > 0:
+            pending_users.delete()
+            messages.warning(
+                request, f"Усі заявки ({count} шт.) було успішно видалено.")
+        else:
+            messages.info(request, "Немає заявок для видалення.")
+
+    return redirect('staff_dashboard')
+
+
+@login_required
+@chairman_required
 def manage_coop(request):
     """Список всіх мешканців кооперативу"""
     ch_mem = Membership.objects.get(user=request.user, role='chairman')
