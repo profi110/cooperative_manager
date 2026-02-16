@@ -17,8 +17,8 @@ services:
 
   web:
     build: .
-    # Додаємо команду запуску спеціально для розробки
-    command: python manage.py runserver 0.0.0.0:8000
+    # Залишаємо gunicorn для стабільності на AWS
+    command: gunicorn cooperative_manager.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
     volumes:
       - .:/app
       - media_volume:/app/media
@@ -32,4 +32,4 @@ services:
 
 volumes:
   postgres_data:
-  media_volume:
+  media_volume: # Тут зберігатимуться фото лічильників мешканців

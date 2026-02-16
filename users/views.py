@@ -1,13 +1,47 @@
+import re
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
+from rest_framework.throttling import UserRateThrottle
+from rest_framework.decorators import api_view, throttle_classes
+from rest_framework.response import Response
+from .forms import CustomUserCreationForm
+from .models import CustomUser
+from cooperatives.models import Cooperative
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 
-from cooperatives.models import Membership, Cooperative
-from meters.models import Meter
-from .models import CustomUser
-from .forms import CustomUserCreationForm
+class DuplicateCheckThrottle(UserRateThrottle):
+    rate = '10/hour'
 
+
+@api_view(['GET'])
+@throttle_classes([DuplicateCheckThrottle])
+def api_check_duplicates(request):
+    """API для перевірки унікальності логіна та телефону з вбудованим фільтром"""
+    username = request.GET.get('username')
+    phone = request.GET.get('phone')
+
+    # Рівень 3: Регулярний вираз для валідації телефону перед зверненням до БД
+    phone_pattern = re.compile(r'^\+?380\d{9}$|^0\d{9}$')
+
+    if phone:
+        # Перевірка формату: якщо це не номер, навіть не смикаємо базу
+        if not phone_pattern.match(phone):
+            return Response(
+                {'is_taken': False, 'error': 'Invalid format'}, status=200)
+
+        is_taken = CustomUser.objects.filter(phone_number=phone).exists()
+        return Response({'is_taken': is_taken})
+
+    if username:
+        # Мінімальна перевірка довжини логіна
+        if len(username) < 3:
+            return Response({'is_taken': False})
+
+        is_taken = CustomUser.objects.filter(username=username).exists()
+        return Response({'is_taken': is_taken})
+
+    return Response({'error': 'No data provided'}, status=400)
 
 def check_coop_id_api(request):
     """API для перевірки існування кооперативу та отримання вулиць через fetch"""
@@ -72,9 +106,8 @@ def dashboard(request):
 
 
 def register(request):
+    """Реєстрація нового мешканця з автоматичним статусом очікування"""
     if request.method == 'POST':
-        print("DEBUG: POST data received:", request.POST)
-
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
@@ -85,11 +118,9 @@ def register(request):
             coop_name = coop.title if coop else "кооперативу"
 
             auth_logout(request)
-            return render(
-                request, 'registration/pending_approval.html',
-                {'coop_name': coop_name})
+            return render(request, 'registration/pending_approval.html', {'coop_name': coop_name})
         else:
-            print("Form Validation Errors:", form.errors)
+            print("Form errors:", form.errors.as_data())
     else:
         form = CustomUserCreationForm()
 

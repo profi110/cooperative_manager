@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser
 from cooperatives.models import Cooperative
-
+import re
+from django.core.exceptions import ValidationError
 
 class CustomUserCreationForm(UserCreationForm):
     last_name = forms.CharField(
@@ -27,6 +28,29 @@ class CustomUserCreationForm(UserCreationForm):
     house_number = forms.CharField(
         label="🏠 Номер будинку/ділянки", widget=forms.TextInput(
             attrs={'placeholder': '12А'}))
+
+    def clean_phone_number(self):
+        phone = self.cleaned_data.get('phone_number')
+        # Перевірка формату на рівні сервера: +380... або 0...
+        if not re.match(r'^\+?380\d{9}$|^0\d{9}$', phone):
+            raise ValidationError(
+                "📱 Номер телефону має бути у форматі +380XXXXXXXXX або 0XXXXXXXXX")
+        return phone
+
+    def clean_street(self):
+        street = self.cleaned_data.get('street')
+        if not street or street == '---------':
+            raise ValidationError("📍 Будь ласка, оберіть вулицю зі списку")
+        return street
+
+    def clean_coop_id(self):
+        coop_id = self.cleaned_data.get('coop_id')
+        try:
+            Cooperative.objects.get(id=coop_id)
+        except (ValueError, Cooperative.DoesNotExist):
+            raise ValidationError("🏢 Такого кооперативу не існує")
+        return coop_id
+
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser

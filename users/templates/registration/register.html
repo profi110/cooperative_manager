@@ -100,8 +100,9 @@
         </div>
     </div>
 
-  <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Константи елементів
         const coopInput = document.getElementById('id_coop_id');
         const streetSelect = document.getElementById('id_street');
         const infoBox = document.getElementById('coop-info');
@@ -114,18 +115,77 @@
 
         let validation = { coop: false, username: false, phone: false };
 
-        function toggleSubmit() {
-            // Кнопка активується, лише коли всі три перевірки пройдені
-            submitBtn.disabled = !(validation.coop && validation.username && validation.phone);
+        // Регулярні вирази для миттєвої фільтрації
+        const PHONE_REGEX = /^\+?380\d{9}$|^0\d{9}$/;
+        const USERNAME_REGEX = /^[a-zA-Z0-9.@+/-/_]{3,}$/;
 
-            // Візуальний ефект: змінюємо прозорість, щоб було видно, що кнопка активна
-            if (!submitBtn.disabled) {
-                submitBtn.style.opacity = "1";
-            } else {
-                submitBtn.style.opacity = "0.6";
-            }
+        // Функція Debounce для зменшення кількості запитів на сервер
+        function debounce(func, timeout = 800) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
         }
 
+        function toggleSubmit() {
+            submitBtn.disabled = !(validation.coop && validation.username && validation.phone);
+            submitBtn.style.opacity = submitBtn.disabled ? "0.6" : "1";
+        }
+
+        // Перевірка дублікатів з попередньою Regex-фільтрацією
+        function checkDuplicate(inputElement, errorElement, paramName, validationKey) {
+            const value = inputElement.value;
+
+            // Клієнтська валідація ПЕРЕД запитом fetch
+            if (paramName === 'phone') {
+                if (!PHONE_REGEX.test(value)) {
+                    inputElement.style.borderColor = "orange";
+                    errorElement.textContent = "⚠️ Невірний формат (+380...)";
+                    validation[validationKey] = false;
+                    toggleSubmit();
+                    return; // Зупиняємо, запит на сервер не йде
+                }
+            }
+
+            if (paramName === 'username') {
+                if (!USERNAME_REGEX.test(value)) {
+                    inputElement.style.borderColor = "orange";
+                    errorElement.textContent = "⚠️ Від 3 символів (латиниця/цифри)";
+                    validation[validationKey] = false;
+                    toggleSubmit();
+                    return;
+                }
+            }
+
+            // Якщо Regex пройдено — робимо запит до БД
+            fetch(`{% url 'api_check_duplicates' %}?${paramName}=${encodeURIComponent(value)}`)
+                .then(response => {
+                    if (response.status === 429) {
+                        errorElement.textContent = "⚠️ Забагато спроб! Почекайте годину.";
+                        return null;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    if (data.is_taken) {
+                        inputElement.style.borderColor = "red";
+                        errorElement.textContent = "❌ Вже використовується";
+                        validation[validationKey] = false;
+                    } else {
+                        inputElement.style.borderColor = "#2ecc71";
+                        errorElement.textContent = "";
+                        validation[validationKey] = true;
+                    }
+                    toggleSubmit();
+                });
+        }
+
+        // Створення дебаунс-версій перевірок
+        const debouncedCheck = debounce((el, err, param, key) => checkDuplicate(el, err, param, key));
+
+        // Слухачі подій
         coopInput.addEventListener('input', function() {
             const coopId = this.value;
             if (coopId.length > 0) {
@@ -165,51 +225,23 @@
             }
         });
 
-        function checkDuplicate(inputElement, errorElement, paramName, validationKey) {
-            const value = inputElement.value;
-            if (value.length < 3) {
-                validation[validationKey] = false;
-                toggleSubmit();
-                return;
-            }
-            fetch(`{% url 'api_check_duplicates' %}?${paramName}=${encodeURIComponent(value)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.is_taken) {
-                        inputElement.style.borderColor = "red";
-                        errorElement.textContent = "❌ Вже використовується";
-                        validation[validationKey] = false;
-                    } else {
-                        inputElement.style.borderColor = "#2ecc71";
-                        errorElement.textContent = "";
-                        validation[validationKey] = true;
-                    }
-                    toggleSubmit();
-                });
-        }
+        usernameInput.addEventListener('input', () => {
+            usernameInput.style.borderColor = "";
+            debouncedCheck(usernameInput, usernameError, 'username', 'username');
+        });
 
-        usernameInput.addEventListener('input', () => checkDuplicate(usernameInput, usernameError, 'username', 'username'));
-        phoneInput.addEventListener('input', () => checkDuplicate(phoneInput, phoneError, 'phone', 'phone'));
+        phoneInput.addEventListener('input', () => {
+            phoneInput.style.borderColor = "";
+            debouncedCheck(phoneInput, phoneError, 'phone', 'phone');
+        });
 
-        // --- НОВИЙ БЛОК: ПРИМУСОВА ПЕРЕВІРКА ПРИ ЗАВАНТАЖЕННІ ---
+        // Початкова перевірка при завантаженні (якщо дані вже є в полях)
         function runInitialValidation() {
-            // 1. Перевірка кооперативу (запускає івент 'input')
-            if (coopInput.value.length > 0) {
-                coopInput.dispatchEvent(new Event('input'));
-            }
-
-            // 2. Перевірка логіна
-            if (usernameInput.value.length >= 3) {
-                checkDuplicate(usernameInput, usernameError, 'username', 'username');
-            }
-
-            // 3. Перевірка телефону
-            if (phoneInput.value.length >= 3) {
-                checkDuplicate(phoneInput, phoneError, 'phone', 'phone');
-            }
+            if (coopInput.value.length > 0) coopInput.dispatchEvent(new Event('input'));
+            if (usernameInput.value.length >= 3) checkDuplicate(usernameInput, usernameError, 'username', 'username');
+            if (phoneInput.value.length >= 3) checkDuplicate(phoneInput, phoneError, 'phone', 'phone');
         }
 
-        // Запуск перевірки одразу після завантаження сторінки
         runInitialValidation();
     });
 </script>
